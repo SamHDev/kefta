@@ -1,0 +1,11 @@
+[package]
+name = "kefta"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+kefta_macro = { path = "../kefta_macro" }
+syn = { version = "1.0.98", features = ["full"] }
+quote = "1.0.20"
+proc-macro2 = "1.0.43"
+litrs = "0.2.3"
