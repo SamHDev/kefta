@@ -15,6 +15,6 @@ impl MappedAttrVec {
     }
 
     pub fn get<K: AsRef<str>>(&self, key: K) -> Option<&AttrNode> {
-        self.map.get(key)
+        self.map.get(key.as_ref())
     }
 }

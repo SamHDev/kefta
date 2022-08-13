@@ -1,7 +1,6 @@
 use litrs::{Literal, OwnedLiteral};
 use proc_macro2::{Ident, TokenTree};
-use syn::spanned::Spanned;
-use crate::{AttrNode, AttrValue, KeftaError, KeftaResult};
+use crate::{AttrValue, KeftaError, KeftaResult};
 
 impl AttrValue for () {
     fn parse(ident: &Ident, data: Option<TokenTree>) -> KeftaResult<Self> {

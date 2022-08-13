@@ -1,5 +1,5 @@
 use syn::{Attribute, Expr, Ident, Token};
-use syn::parse::{Parse, ParseBuffer, ParseStream};
+use syn::parse::{Parse, ParseStream};
 use syn::punctuated::Punctuated;
 
 pub fn parse_nodes(attrs: Vec<Attribute>) -> syn::Result<Vec<AttrNode>> {

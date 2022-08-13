@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 kefta_macro = { path = "../kefta_macro" }
+kefta_core = { path = "../kefta_core" }
 syn = { version = "1.0.98", features = ["full"] }
 quote = "1.0.20"
 proc-macro2 = "1.0.43"
