@@ -13,14 +13,13 @@ impl AttrValue for () {
     }
 }
 
-impl AttrValue for Option<TokenTree> {
+impl<T: AttrValue> AttrValue for Option<T> {
     fn parse(node: AttrNode) -> KeftaResult<Self> {
-        match node.data {
-            AttrTree::Valued { value, .. } => Ok(Some(value)),
-            _ => Ok(None)
-        }
+        T::parse(node).map(|x| Some(x))
     }
 }
+
+// ---- token tree ----
 
 impl AttrValue for TokenTree {
     fn parse(node: AttrNode) -> KeftaResult<Self> {

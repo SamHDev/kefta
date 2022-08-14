@@ -23,6 +23,16 @@ pub enum KeftaError {
         span: Span,
     },
 
+    Multiple {
+        key: String,
+        count: usize,
+    },
+
+    Required {
+        key: String,
+        multiple: bool,
+    },
+
     Message {
         message: String,
         span: Option<Span>,
@@ -42,4 +52,13 @@ pub enum KeftaExpected {
     ByteLiteral,
     NumericLiteral,
     BooleanLiteral,
+}
+
+impl KeftaError {
+    pub fn require<T>(key: &str, multiple: bool, value: Option<T>) -> KeftaResult<T> {
+        match value {
+            None => Err(KeftaError::Required { key: key.to_string(), multiple }),
+            Some(x) => Ok(x),
+        }
+    }
 }
