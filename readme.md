@@ -1,6 +1,10 @@
 ## `Kefta`
 simplified attribute parsing w/ proc-macros
 
+[![crates.io badge](https://img.shields.io/crates/v/kefta.svg?style=for-the-badge)](https://crates.io/crates/kefta)
+[![docs.rs badge](https://img.shields.io/docsrs/kefta.svg?style=for-the-badge&color=blue)](https://docs.rs/kefta)
+[![Downloads badge](https://img.shields.io/crates/d/kefta.svg?style=for-the-badge)](https://crates.io/crates/kefta)
+
 ### Key Features
 - derive macros for easily parsing structures
 - built-in "decent" error messages
