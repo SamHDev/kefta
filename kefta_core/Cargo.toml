@@ -4,8 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [features]
-default = ["literal", "util", "syn"]
-ident = []
+default = ["literal"]
 literal = ["litrs"]
 util = []
 syn = ["dep:syn"]

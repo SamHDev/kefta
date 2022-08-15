@@ -1,5 +1,6 @@
 //! utility types and traits.
 
+#[cfg(feature = "util")]
 pub mod case;
 
 #[cfg(feature = "syn")]

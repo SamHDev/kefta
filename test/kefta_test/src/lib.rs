@@ -3,20 +3,13 @@
 use proc_macro::TokenStream;
 use syn::parse_macro_input;
 use syn::DeriveInput;
-use kefta::{Attr, AttrParse};
+use kefta::{Attr, parse_attr};
 
 #[proc_macro_derive(TestMacro, attributes(test))]
 pub fn test_macro(item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as DeriveInput);
 
-    let attrs: MyAttr = match input.attrs.parse_attrs() {
-        Ok(attr) => attr,
-        Err(e) => {
-            let e: syn::Error = e.into();
-            return e.to_compile_error().into();
-        },
-    };
-
+    let attrs = parse_attr!(input.attrs => MyAttr);
     println!("ATTR {:?}", attrs);
 
     TokenStream::new()

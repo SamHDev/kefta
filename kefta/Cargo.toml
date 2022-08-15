@@ -3,6 +3,12 @@ name = "kefta"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+default = ["literals"]
+literals = ["kefta_core/literal"]
+util = ["kefta_core/syn"]
+syn = ["kefta_core/util"]
+
 [dependencies]
 kefta_macro = { path = "../kefta_macro" }
 kefta_core = { path = "../kefta_core" }
