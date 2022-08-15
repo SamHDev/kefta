@@ -1,11 +1,15 @@
 [package]
 name = "kefta"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2021"
+description = "proc-macro for simplified attribute parsing"
+repository = "https://github.com/samhdev/kefta"
+license = "GPL-3.0-or-later"
+
 
 [features]
-default = ["literals"]
-literals = ["kefta_core/literal"]
+default = ["literal"]
+literal = ["kefta_core/literal"]
 util = ["kefta_core/syn"]
 syn = ["kefta_core/util"]
 
