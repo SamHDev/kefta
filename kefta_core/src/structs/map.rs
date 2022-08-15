@@ -95,7 +95,8 @@ impl AttrMap {
                 if error {
                     Err(KeftaError::Multiple {
                         key: key.to_string(),
-                        count: nodes.len()
+                        count: nodes.len(),
+                        span: nodes.first().unwrap().ident.span()
                     })
                 } else {
                     Ok(None)

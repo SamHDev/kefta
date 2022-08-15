@@ -16,7 +16,7 @@ impl AttrTokenParse for TokenTree {
     fn parse(stream: &mut AttrTokenStream) -> Result<Self, KeftaTokenError> {
         match stream.next() {
             Some(token_tree) => Ok(token_tree),
-            None => Err(KeftaTokenError::ExpectedToken),
+            None => Err(KeftaTokenError::ExpectedToken { span: stream.stream_span() }),
         }
     }
 }

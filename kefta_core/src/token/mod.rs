@@ -1,3 +1,7 @@
+//! internal parsing of attributes
+//!
+//! **un-documented**
+
 mod stream;
 mod parse;
 mod node;

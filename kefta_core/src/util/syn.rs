@@ -6,6 +6,7 @@ use crate::parse::AttrValue;
 use syn::parse::{Parse};
 use syn::parse2;
 
+/// a wrapper around any `syn` value
 pub struct Syn<T: Parse>(pub(crate) T);
 
 impl<T: Parse> Deref for Syn<T> {

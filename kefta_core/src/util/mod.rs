@@ -1,9 +1,13 @@
+//! utility types and traits.
+
 pub mod case;
 
 #[cfg(feature = "syn")]
-pub mod syn;
+mod syn;
+#[cfg(feature = "syn")]
+pub use self::syn::Syn;
 
-pub mod named;
+//pub mod named;
 
 
 

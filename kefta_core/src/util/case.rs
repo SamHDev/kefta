@@ -1,3 +1,5 @@
+//! value types for changing case of idents and strings
+
 use crate::error::{KeftaError, KeftaResult};
 use crate::node::{AttrNode};
 use crate::parse::AttrValue;

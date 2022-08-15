@@ -1,46 +1,68 @@
+//! library error types
+
 use std::fmt::{Debug, Formatter};
 use proc_macro2::{Delimiter, Ident, Span, TokenTree};
 
+/// alias for `Result<T, KeftaError>`
 pub type KeftaResult<T> = Result<T, KeftaError>;
 
+/// an error for parsing tokens into nodes
 #[derive(Debug)]
 pub enum KeftaTokenError {
-    ExpectedToken,
+    /// expected a token, found end of stream
+    ExpectedToken { span: Span },
+    /// expected a type, found otherwise
     Expected {
+        /// the expected type
         expected: &'static str,
+        /// further description
         description: Option<&'static str>,
+        /// the tokens found
         found: TokenTree
     },
+    /// a generic message
     Message(&'static str, Span)
 }
 
 pub enum KeftaError {
+    /// an error while parsing tokens
     TokenError(KeftaTokenError),
 
+    /// expected a marker, found otherwise
     ExpectedMarker { ident: Ident },
+    /// expected a value, found otherwise
     ExpectedValue { ident: Ident },
+    /// expected a container, found otherwise
     ExpectedContainer { ident: Ident },
 
+    /// expected a type at the given span, found otherwise
     Expected {
+        /// the expected type
         expected: KeftaExpected,
+        /// the span
         span: Span,
     },
 
+    /// found multiple nodes, but only expected one.
     Multiple {
         key: String,
         count: usize,
+        span: Span,
     },
 
+    /// the node is required, but was not found.
     Required {
         key: String,
         multiple: bool,
     },
 
+    /// a generic message
     Message {
         message: String,
         span: Option<Span>,
     },
 
+    /// an error for `syn` compatibility
     #[cfg(feature = "syn")]
     Syn(syn::Error)
 }
@@ -101,8 +123,69 @@ impl Debug for KeftaError {
 #[cfg(feature="syn")]
 impl Into<syn::Error> for KeftaError {
     fn into(self) -> syn::Error {
-        syn::Error::new(Span::call_site(), format!("{:?}", self))
+        match self {
+            KeftaError::Syn(e) => e,
+
+            KeftaError::TokenError(error) => match error {
+                KeftaTokenError::ExpectedToken { span } =>
+                    syn::Error::new(span, "expected a token, found the end of the stream"),
+                KeftaTokenError::Expected { expected, description, found } =>
+                    syn::Error::new(found.span(), format!(
+                        "expected {}{} but found {}`",
+                        expected,
+                        match description {
+                            None => ", ".to_string(),
+                            Some(desc) => format!("[{}]", desc.to_string()),
+                        },
+                        match found {
+                            TokenTree::Ident(ident) => format!("ident `{}`", ident.to_string()),
+                            TokenTree::Punct(punct) => format!("a `{}` token", punct.as_char()),
+                            TokenTree::Literal(literal) => format!("literal `{}`", literal),
+                            TokenTree::Group(group) => format!("a `{:?}` group", delimiter_str(group.delimiter())),
+                        },
+                    )),
+                KeftaTokenError::Message(msg, span) => syn::Error::new(span, msg)
+            },
+
+            KeftaError::ExpectedMarker { ident } =>
+                syn::Error::new(ident.span(), "expected a `marker` type attribute"),
+            KeftaError::ExpectedValue { ident } =>
+                syn::Error::new(ident.span(), "expected a value"),
+            KeftaError::ExpectedContainer { ident } =>
+                syn::Error::new(ident.span(), "expected a `container` attribute"),
+
+            KeftaError::Expected { expected, span } =>
+                syn::Error::new(span, format!("expected `{:?}`", expected)),
+
+            KeftaError::Multiple { key, count, span } =>
+                syn::Error::new(span, format!(
+                    "found {} occurrences for `{}`, but only expected one",
+                    count,
+                    key
+                )),
+
+            KeftaError::Required { key, .. } =>
+                syn::Error::new(Span::call_site(), format!(
+                    "the attribute `{}` is required", key
+                )),
+
+            KeftaError::Message { message, span } =>
+                syn::Error::new(
+                    span.unwrap_or_else(|| Span::call_site()),
+                    message
+                ),
+
+            //this @ _ => syn::Error::new(Span::call_site(), format!("{:?}", this))
+        }
     }
 }
 
 
+fn delimiter_str(delimiter: Delimiter) -> &'static str {
+    match delimiter {
+        Delimiter::Parenthesis => "()",
+        Delimiter::Brace => "{}",
+        Delimiter::Bracket => "[]",
+        Delimiter::None => "_",
+    }
+}

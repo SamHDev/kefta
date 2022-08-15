@@ -1,10 +1,12 @@
 use std::iter::Peekable;
 use proc_macro2::token_stream::IntoIter as TokenStreamIter;
-use proc_macro2::{TokenStream, TokenTree};
+use proc_macro2::{Span, TokenStream, TokenTree};
+use syn::spanned::Spanned;
 use crate::error::KeftaTokenError;
 use crate::token::AttrTokenParse;
 
 pub struct AttrTokenStream {
+    span: Span,
     tokens: Peekable<TokenStreamIter>,
 }
 
@@ -12,6 +14,7 @@ pub struct AttrTokenStream {
 impl AttrTokenStream {
     pub fn new(stream: TokenStream) -> Self {
         Self {
+            span: stream.span(),
             tokens: stream.into_iter().peekable()
         }
     }
@@ -38,5 +41,9 @@ impl AttrTokenStream {
 
     pub fn has_tokens(&mut self) -> bool {
         self.tokens.peek().is_some()
+    }
+
+    pub fn stream_span(&self) -> Span {
+        self.span.clone()
     }
 }
