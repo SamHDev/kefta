@@ -7,7 +7,8 @@ fn main() {
 }
 
 #[derive(TestMacro)]
-#[test(foo = "Hello World", baz::alpha = "Test!", baz(beta))]
+#[test(baz::alpha = "Test!", baz(beta))]
+#[test(foo=69)]
 pub struct MyStruct {
     foo: String,
 }

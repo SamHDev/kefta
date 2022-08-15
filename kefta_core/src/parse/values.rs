@@ -1,4 +1,4 @@
-use proc_macro2::TokenTree;
+use proc_macro2::{Span, TokenTree};
 use crate::error::{KeftaError, KeftaExpected, KeftaResult};
 use crate::node::{AttrNode, AttrTree};
 use crate::parse::AttrValue;
@@ -25,6 +25,15 @@ impl AttrValue for TokenTree {
     fn parse(node: AttrNode) -> KeftaResult<Self> {
         match node.data {
             AttrTree::Valued { value, .. } => Ok(value),
+            _ => Err(KeftaError::ExpectedValue { ident: node.ident }),
+        }
+    }
+}
+
+impl AttrValue for (Span, TokenTree) {
+    fn parse(node: AttrNode) -> KeftaResult<Self> {
+        match node.data {
+            AttrTree::Valued { value, .. } => Ok((value.span(), value)),
             _ => Err(KeftaError::ExpectedValue { ident: node.ident }),
         }
     }
@@ -60,12 +69,19 @@ impl AttrValue for litrs::OwnedLiteral {
 }
 
 #[cfg(feature="literal")]
+impl AttrValue for (Span, litrs::OwnedLiteral) {
+    fn parse(node: AttrNode) -> KeftaResult<Self> {
+        let literal = proc_macro2::Literal::parse(node)?;
+        Ok((literal.span(), litrs::OwnedLiteral::from( literal )))
+    }
+}
+
+#[cfg(feature="literal")]
 impl AttrValue for char {
     fn parse(node: AttrNode) -> KeftaResult<Self> {
-        let span = node.ident.span();
-        match <litrs::OwnedLiteral as AttrValue>::parse(node)? {
-            litrs::Literal::Char(string) => Ok(string.value()),
-            _ => Err(KeftaError::Expected {
+        match <(Span, litrs::OwnedLiteral) as AttrValue>::parse(node)? {
+            (_, litrs::Literal::Char(string)) => Ok(string.value()),
+            (span, _) => Err(KeftaError::Expected {
                 expected: KeftaExpected::CharLiteral,
                 span
             })
@@ -76,10 +92,9 @@ impl AttrValue for char {
 #[cfg(feature="literal")]
 impl AttrValue for String {
     fn parse(node: AttrNode) -> KeftaResult<Self> {
-        let span = node.ident.span();
-        match <litrs::OwnedLiteral as AttrValue>::parse(node)? {
-            litrs::Literal::String(string) => Ok(string.value().to_string()),
-            _ => Err(KeftaError::Expected {
+        match <(Span, litrs::OwnedLiteral) as AttrValue>::parse(node)? {
+            (_, litrs::Literal::String(string)) => Ok(string.value().to_string()),
+            (span, _) => Err(KeftaError::Expected {
                 expected: KeftaExpected::StringLiteral,
                 span
             })
@@ -90,10 +105,9 @@ impl AttrValue for String {
 #[cfg(feature="literal")]
 impl AttrValue for Vec<u8> {
     fn parse(node: AttrNode) -> KeftaResult<Self> {
-        let span = node.ident.span();
-        match <litrs::OwnedLiteral as AttrValue>::parse(node)? {
-            litrs::Literal::ByteString(string) => Ok(string.into_value().to_vec()),
-            _ => Err(KeftaError::Expected {
+        match <(Span, litrs::OwnedLiteral) as AttrValue>::parse(node)? {
+            (_, litrs::Literal::ByteString(string)) => Ok(string.into_value().to_vec()),
+            (span, _) => Err(KeftaError::Expected {
                 expected: KeftaExpected::ByteLiteral,
                 span
             })
@@ -107,9 +121,8 @@ macro_rules! attr_num {
         $(
             impl AttrValue for $type {
                 fn parse(node: AttrNode) -> KeftaResult<Self> {
-                    let span = node.ident.span();
-                    match <litrs::OwnedLiteral as AttrValue>::parse(node)? {
-                        litrs::Literal::Integer(integer) => match integer.value::<$type>() {
+                    match <(Span, litrs::OwnedLiteral) as AttrValue>::parse(node)? {
+                        (span, litrs::Literal::Integer(integer)) => match integer.value::<$type>() {
                             Some(num) => Ok(num),
                             None => Err(KeftaError::Message {
                                 message: format!(
@@ -120,7 +133,7 @@ macro_rules! attr_num {
                                 span: Some(span)
                             })
                         },
-                        _ => Err(KeftaError::Expected {
+                        (span, _) => Err(KeftaError::Expected {
                             expected: KeftaExpected::NumericLiteral,
                             span
                         })
@@ -135,16 +148,15 @@ attr_num!(usize, u8, i8, u16, i16, u32, i32, u64, i64);
 
 impl AttrValue for bool {
     fn parse(node: AttrNode) -> KeftaResult<Self> {
-        let span = node.ident.span();
         match node.data {
             AttrTree::Marker => Ok(true),
 
             #[cfg(feature="literal")]
             AttrTree::Valued { .. } =>
-                match <litrs::OwnedLiteral as AttrValue>::parse(node)? {
-                    litrs::Literal::Bool(boolean) => Ok(boolean.value()),
+                match  <(Span, litrs::OwnedLiteral) as AttrValue>::parse(node)? {
+                    (_, litrs::Literal::Bool(boolean)) => Ok(boolean.value()),
 
-                    _ => Err(KeftaError::Expected {
+                    (span, _) => Err(KeftaError::Expected {
                         expected: KeftaExpected::BooleanLiteral,
                         span
                     })

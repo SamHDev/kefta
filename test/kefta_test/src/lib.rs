@@ -25,7 +25,7 @@ pub fn test_macro(item: TokenStream) -> TokenStream {
 #[derive(Attr, Debug)]
 struct MyAttr {
     #[attr(required)]
-    foo: String,
+    foo: u8,
     bar: bool,
     #[attr(container)]
     baz: MyAttrBaz

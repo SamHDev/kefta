@@ -131,17 +131,17 @@ impl Into<syn::Error> for KeftaError {
                     syn::Error::new(span, "expected a token, found the end of the stream"),
                 KeftaTokenError::Expected { expected, description, found } =>
                     syn::Error::new(found.span(), format!(
-                        "expected {}{} but found {}`",
+                        "expected {}{} but found {}",
                         expected,
                         match description {
-                            None => ", ".to_string(),
-                            Some(desc) => format!("[{}]", desc.to_string()),
+                            None => ",".to_string(),
+                            Some(desc) => format!(" [{}]", desc.to_string()),
                         },
                         match found {
                             TokenTree::Ident(ident) => format!("ident `{}`", ident.to_string()),
                             TokenTree::Punct(punct) => format!("a `{}` token", punct.as_char()),
                             TokenTree::Literal(literal) => format!("literal `{}`", literal),
-                            TokenTree::Group(group) => format!("a `{:?}` group", delimiter_str(group.delimiter())),
+                            TokenTree::Group(group) => format!("a `{}` group", delimiter_str(group.delimiter())),
                         },
                     )),
                 KeftaTokenError::Message(msg, span) => syn::Error::new(span, msg)
@@ -155,7 +155,21 @@ impl Into<syn::Error> for KeftaError {
                 syn::Error::new(ident.span(), "expected a `container` attribute"),
 
             KeftaError::Expected { expected, span } =>
-                syn::Error::new(span, format!("expected `{:?}`", expected)),
+                syn::Error::new(span, format!(
+                    "expected `{}`",
+                    match expected {
+                        KeftaExpected::Literal => "a literal",
+                        KeftaExpected::Punct => "a punct token",
+                        KeftaExpected::Ident => "an identifier",
+                        KeftaExpected::Group => "a group",
+                        KeftaExpected::Delimiter(_delimiter) => "a group", // todo
+                        KeftaExpected::CharLiteral => "a character literal (char)",
+                        KeftaExpected::StringLiteral => "a string literal",
+                        KeftaExpected::ByteLiteral => "a byte-string literal (b\"\")",
+                        KeftaExpected::NumericLiteral => "a numeric literal",
+                        KeftaExpected::BooleanLiteral => "a boolean literal (true/false)"
+                    }
+                )),
 
             KeftaError::Multiple { key, count, span } =>
                 syn::Error::new(span, format!(
