@@ -1,10 +1,8 @@
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
-use syn::{Data, DataStruct, DeriveInput, Field, LitStr};
+use syn::{Data, DeriveInput, Field, LitStr};
 use syn::spanned::Spanned;
-use kefta_core::error::KeftaError;
 use kefta_core::structs::AttrParse;
-use kefta_core::util::named::Named;
 use crate::attr::StructAttr;
 
 pub fn attr_struct(input: DeriveInput) -> syn::Result<TokenStream> {

@@ -2,7 +2,7 @@ use proc_macro2::TokenStream;
 use crate::error::{KeftaError, KeftaResult};
 use crate::node::AttrNode;
 use crate::structs::AttrStruct;
-use crate::token::{AttrTokenParse, AttrTokenStream};
+use crate::token::{AttrTokenStream};
 
 pub trait AttrParse {
     fn parse_attrs<T: AttrStruct>(self) -> KeftaResult<T>;

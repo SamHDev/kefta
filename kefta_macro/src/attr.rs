@@ -1,4 +1,3 @@
-use syn::token::Struct;
 use kefta_core::error::{KeftaResult};
 use kefta_core::node::AttrNode;
 use kefta_core::structs::{AttrMap, AttrStruct};

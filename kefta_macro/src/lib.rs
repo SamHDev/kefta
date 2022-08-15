@@ -11,8 +11,8 @@ pub fn attr_macro(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
 
     let out = match input.data {
-        Data::Struct(ref data) => attr_struct::attr_struct(input),
-        Data::Enum(_) => Err(syn::Error::new(input.span(), "unions are not supported")),
+        Data::Struct(_) => attr_struct::attr_struct(input),
+        Data::Enum(_) => Err(syn::Error::new(input.span(), "enums are not supported")),
         Data::Union(_) => Err(syn::Error::new(input.span(), "unions are not supported")),
     };
 

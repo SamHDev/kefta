@@ -8,3 +8,4 @@ proc-macro = true
 
 [dependencies]
 kefta = { path = "../../kefta"}
+syn = "1.0.99"

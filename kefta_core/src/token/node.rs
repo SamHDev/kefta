@@ -1,4 +1,4 @@
-use proc_macro2::{Delimiter, Group, TokenStream, TokenTree};
+use proc_macro2::{Delimiter, Group, TokenTree};
 use crate::error::KeftaTokenError;
 use crate::node::{AttrNode, AttrTree};
 use crate::token::{AttrTokenParse, AttrTokenStream};
