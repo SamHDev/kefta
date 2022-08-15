@@ -14,5 +14,5 @@ util = ["kefta_core/syn"]
 syn = ["kefta_core/util"]
 
 [dependencies]
-kefta_macro = { path = "../kefta_macro" }
-kefta_core = { path = "../kefta_core" }
+kefta_macro = { path = "../kefta_macro", version = "0.0.1" }
+kefta_core = { path = "../kefta_core", version = "0.0.1" }

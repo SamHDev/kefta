@@ -1,13 +1,13 @@
 [package]
 name = "kefta_macro"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2021"
 
 [lib]
 proc-macro = true
 
 [dependencies]
-kefta_core = { path = "../kefta_core", features = ["syn"] }
+kefta_core = { path = "../kefta_core", features = ["syn"], version = "0.0.1" }
 proc-macro2 = "1.0.42"
 syn = { version = "1.0.98", features = ["full", "extra-traits"] }
 quote = "1.0.20"
