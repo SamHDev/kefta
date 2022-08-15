@@ -86,6 +86,7 @@ pub use kefta_core::token;
 pub use kefta_core::parse::{AttrValue};
 pub use kefta_core::node::{AttrNode, AttrTree};
 pub use kefta_core::structs::{AttrMap, AttrStruct, AttrParse};
+#[cfg(any(feature = "syn", feature = "util"))]
 pub use kefta_core::util;
 
 /// attribute for creating attribute structures
