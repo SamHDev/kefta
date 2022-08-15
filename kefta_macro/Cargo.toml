@@ -2,6 +2,9 @@
 name = "kefta_macro"
 version = "0.0.1"
 edition = "2021"
+description = "macro functionality for the `kefta` crate"
+repository = "https://github.com/samhdev/kefta"
+license = "GPL-3.0-or-later"
 
 [lib]
 proc-macro = true

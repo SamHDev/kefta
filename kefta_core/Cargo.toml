@@ -2,6 +2,9 @@
 name = "kefta_core"
 version = "0.0.1"
 edition = "2021"
+description = "core functionality for the `kefta` crate"
+repository = "https://github.com/samhdev/kefta"
+license = "GPL-3.0-or-later"
 
 [features]
 default = ["literal"]
