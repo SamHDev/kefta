@@ -2,6 +2,7 @@ use crate::error::{KeftaError, KeftaResult};
 use crate::node::{AttrNode};
 use crate::parse::AttrValue;
 
+/// a literal to modify an ident into a given case
 pub enum IdentCase {
     Lower,
     Upper,
@@ -49,6 +50,7 @@ impl IdentCase {
     }
 }
 
+/// a literal to modify a string literal into a given case
 pub enum StringCase {
     Lower,
     Upper,

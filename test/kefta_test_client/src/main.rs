@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use kefta_test::TestMacro;
 
 fn main() {

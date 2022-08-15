@@ -6,3 +6,7 @@ members = [
     "test/kefta_test",
     "test/kefta_test_client"
 ]
+exclude = [
+    "test/kefta_test",
+    "test/kefta_test_client"
+]

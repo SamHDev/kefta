@@ -7,11 +7,13 @@ use crate::structs::AttrStruct;
 const _EMPTY: Vec<AttrNode> = Vec::new();
 const _EMPTY_REF: &Vec<AttrNode> = &_EMPTY;
 
+/// map for parsing an array of attribute nodes
 pub struct AttrMap {
     map: BTreeMap<String, Vec<AttrNode>>
 }
 
 impl AttrMap {
+    /// Create a new `AttrMap` from an array of attribute nodes
     pub fn new(nodes: Vec<AttrNode>) -> Self {
         let mut map: BTreeMap<String, Vec<AttrNode>> = BTreeMap::new();
 
@@ -28,6 +30,8 @@ impl AttrMap {
         Self { map }
     }
 
+    /// compare a list of keys/names and return the first occurring.
+    /// if no match is found, return `None`
     pub fn alias<'a>(&self, names: &[&'a str]) -> Option<&'a str> {
         for name in names {
             if self.map.contains_key(*name) {
@@ -37,6 +41,8 @@ impl AttrMap {
         None
     }
 
+    /// compare a list of keys/names and return the first occurring.
+    /// if no match is found return the first key.
     pub fn alias_otherwise<'a>(&self, names: &[&'a str]) -> &'a str {
         for name in names {
             if self.map.contains_key(*name) {
@@ -46,6 +52,7 @@ impl AttrMap {
         names[0]
     }
 
+    /// peek (without removing) the nodes with a given key
     pub fn peek_nodes(&self, key: &str) -> &Vec<AttrNode> {
         match self.map.get(key) {
             None => &_EMPTY_REF,
@@ -53,6 +60,7 @@ impl AttrMap {
         }
     }
 
+    /// get (removing from map) the nodes with a given key
     pub fn get_nodes(&mut self, key: &str) -> Option<Vec<AttrNode>> {
         match self.map.remove(key) {
             None => None,
@@ -60,6 +68,7 @@ impl AttrMap {
         }
     }
 
+    /// peek (without removing) the first matching node with the given key
     pub fn peek_node(&self, key: &str) -> Option<&AttrNode> {
         match self.map.get(key) {
             None => None,
@@ -71,6 +80,12 @@ impl AttrMap {
         }
     }
 
+    /// get (removing from map) the first matching node with the given key
+    ///
+    /// the parameter `error` controls duplicate behaviour
+    /// - when set to `true` - if multiple with the same key are found,
+    ///  a `KeftaError::Multiple` error will be returned
+    /// - when set to `false` - multiple nodes will be ignored.
     pub fn get_node(&mut self, key: &str, error: bool) -> KeftaResult<Option<AttrNode>> {
         match self.map.remove(key) {
             None => Ok(None),
@@ -89,6 +104,7 @@ impl AttrMap {
         }
     }
 
+    /// gather nodes (removing from map) with an array of keys
     pub fn gather_nodes(&mut self, keys: &[&str])  -> KeftaResult<Vec<AttrNode>> {
         let mut build = Vec::new();
 
@@ -106,6 +122,8 @@ impl AttrMap {
 
     /* parse functions */
 
+    /// parse a single node from an array of keys,
+    /// returning `Default::default()` if not present.
     pub fn parse_one<T: AttrValue + Default>(&mut self, keys: &[&str])  -> KeftaResult<T> {
         for key in keys {
             if let Some(node) = self.get_node(key, false)? {
@@ -115,6 +133,7 @@ impl AttrMap {
         Ok(<T as Default>::default())
     }
 
+    /// parse an optional single node from an array of keys
     pub fn parse_optional<T: AttrValue>(&mut self, keys: &[&str])  -> KeftaResult<Option<T>> {
         for key in keys {
             if let Some(node) = self.get_node(key, false)? {
@@ -124,6 +143,8 @@ impl AttrMap {
         Ok(None)
     }
 
+    /// parse an single node from an array of keys,
+    /// returning an `KeftaError::Required` error if not present.
     pub fn parse_required<T: AttrValue>(&mut self, keys: &[&str])  -> KeftaResult<T> {
         for key in keys {
             if let Some(node) = self.get_node(key, false)? {
@@ -136,6 +157,7 @@ impl AttrMap {
         })
     }
 
+    /// parse an array of nodes, from an array of keys.
     pub fn parse_array<T: AttrValue>(&mut self, keys: &[&str])  -> KeftaResult<Vec<T>> {
         let mut build = Vec::new();
 
@@ -150,11 +172,15 @@ impl AttrMap {
         Ok(build)
     }
 
+    /// parse an array of nodes, from an array of keys.
+    /// returns `None` if no matching nodes are found
     pub fn parse_array_optional<T: AttrValue>(&mut self, keys: &[&str])  -> KeftaResult<Option<Vec<T>>> {
         let array = self.parse_array(&keys)?;
         if array.is_empty() { Ok(None) } else { Ok(Some(array)) }
     }
 
+    /// parse an array of nodes, from an array of keys.
+    /// returns an `KeftaError::Required` error if no matching nodes are found
     pub fn parse_array_required<T: AttrValue>(&mut self, keys: &[&str])  -> KeftaResult<Vec<T>> {
         let array = self.parse_array(&keys)?;
         if array.is_empty() {
@@ -167,6 +193,10 @@ impl AttrMap {
         }
     }
 
+    /// parse a `AttrStruct` from an array of keys.
+    ///
+    /// this inspects the nodes and gathers the contents of `AttrTree::Container`.
+    /// returns `KeftaError::ExpectedContainer` if a non-container is found
     pub fn parse_container<T: AttrStruct>(&mut self, keys: &[&str])  -> KeftaResult<T> {
         let mut build = Vec::new();
 
@@ -180,6 +210,7 @@ impl AttrMap {
         T::parse(build)
     }
 
+    /// parse an array of nodes with a given function
     pub fn parse_with<T>(&mut self, keys: &[&str], func: fn(nodes: Vec<AttrNode>) -> KeftaResult<T>) -> KeftaResult<T> {
         (func)(self.gather_nodes(&keys)?)
     }

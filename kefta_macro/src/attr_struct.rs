@@ -42,7 +42,7 @@ fn attr_struct_field(field: Field) -> syn::Result<TokenStream> {
         Err(e) => return Err(e.into())
     };
 
-    println!("{:?}", attrs);
+    //println!("{:?}", attrs);
 
     // build key array
     let mut keys = if let Some(rename) = attrs.name {

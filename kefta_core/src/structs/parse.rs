@@ -4,6 +4,7 @@ use crate::node::AttrNode;
 use crate::structs::AttrStruct;
 use crate::token::{AttrTokenStream};
 
+/// parse a token input into a given struct
 pub trait AttrParse {
     fn parse_attrs<T: AttrStruct>(self) -> KeftaResult<T>;
 }

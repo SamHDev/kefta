@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use proc_macro::TokenStream;
 use syn::parse_macro_input;
 use syn::DeriveInput;

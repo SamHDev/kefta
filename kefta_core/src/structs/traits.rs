@@ -2,7 +2,7 @@ use crate::error::KeftaResult;
 use crate::node::AttrNode;
 use crate::parse::AttrValue;
 
-
+/// a defined structure of attributes
 pub trait AttrStruct: Sized {
     fn parse(nodes: Vec<AttrNode>) -> KeftaResult<Self>;
 }
