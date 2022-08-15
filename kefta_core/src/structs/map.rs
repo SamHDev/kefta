@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 use crate::error::{KeftaError, KeftaResult};
-use crate::node::AttrNode;
+use crate::node::{AttrNode, AttrTree};
 use crate::parse::AttrValue;
 use crate::structs::AttrStruct;
 
@@ -43,7 +43,7 @@ impl AttrMap {
                 return name
             }
         }
-        name[0]
+        names[0]
     }
 
     pub fn peek_nodes(&self, key: &str) -> &Vec<AttrNode> {
@@ -89,57 +89,98 @@ impl AttrMap {
         }
     }
 
-
-    pub fn node_default<T: AttrValue + Default>(&mut self, key: &str, lax: bool) -> KeftaResult<T> {
-        match self.get_node(key, !lax)? {
-            None => Ok(Default::default()),
-            Some(node) => AttrValue::parse(node),
-        }
-    }
-
-    pub fn node_optional<T: AttrValue>(&mut self, key: &str, lax: bool) -> KeftaResult<Option<T>> {
-        match self.get_node(key, !lax)? {
-            None => Ok(None),
-            Some(node) => Ok(Some(AttrValue::parse(node)?))
-        }
-    }
-
-    pub fn node_required<T: AttrValue>(&mut self, key: &str, lax: bool) -> KeftaResult<T> {
-        KeftaError::require(key, false, self.node_optional(key, lax)?)
-    }
-
-    pub fn node_multiple<T: AttrValue>(&mut self, keys: &[&str]) -> KeftaResult<Vec<T>> {
+    pub fn gather_nodes(&mut self, keys: &[&str])  -> KeftaResult<Vec<AttrNode>> {
         let mut build = Vec::new();
 
         for key in keys {
-            build.extend(self.get_nodes(key)?);
+            if let Some(nodes) = self.get_nodes(key) {
+                for node in nodes {
+                    build.push(node);
+                }
+            }
         }
 
         Ok(build)
     }
 
-    pub fn node_multiple_optional<T: AttrValue>(&mut self, keys: &[&str]) -> KeftaResult<Option<Vec<T>>> {
-        let nodes = self.node_multiple(keys)?;
-        Ok(if nodes.is_empty() { None } else { Some(nodes) })
+
+    /* parse functions */
+
+    pub fn parse_one<T: AttrValue + Default>(&mut self, keys: &[&str])  -> KeftaResult<T> {
+        for key in keys {
+            if let Some(node) = self.get_node(key, false)? {
+                return <T as AttrValue>::parse(node);
+            }
+        }
+        Ok(<T as Default>::default())
     }
 
-    pub fn node_multiple_required<T: AttrValue>(&mut self, keys: &[&str]) -> KeftaResult<Vec<T>> {
-        KeftaError::require(&keys[0], true, self.node_multiple_optional(keys)?)
+    pub fn parse_optional<T: AttrValue>(&mut self, keys: &[&str])  -> KeftaResult<Option<T>> {
+        for key in keys {
+            if let Some(node) = self.get_node(key, false)? {
+                return <T as AttrValue>::parse(node).map(|x| Some(x));
+            }
+        }
+        Ok(None)
     }
 
-    pub fn node_default_alias<T: AttrValue + Default>(&mut self, keys: &[&str], lax: bool) -> KeftaResult<T> {
-        self.node_default(&self.alias_otherwise(keys), lax)
+    pub fn parse_required<T: AttrValue>(&mut self, keys: &[&str])  -> KeftaResult<T> {
+        for key in keys {
+            if let Some(node) = self.get_node(key, false)? {
+                return <T as AttrValue>::parse(node);
+            }
+        }
+        Err(KeftaError::Required {
+            key: keys[0].to_string(),
+            multiple: false
+        })
     }
 
-    pub fn node_optional_alias<T: AttrValue>(&mut self, keys: &[&str], lax: bool) -> KeftaResult<Option<T>> {
-        self.node_optional(&self.alias_otherwise(keys), lax)
+    pub fn parse_array<T: AttrValue>(&mut self, keys: &[&str])  -> KeftaResult<Vec<T>> {
+        let mut build = Vec::new();
+
+        for key in keys {
+            if let Some(nodes) = self.get_nodes(key) {
+                for node in nodes {
+                    build.push(T::parse(node)?);
+                }
+            }
+        }
+
+        Ok(build)
     }
 
-    pub fn node_required_alias<T: AttrValue>(&mut self, keys: &[&str], lax: bool) -> KeftaResult<T> {
-        KeftaError::require(
-            key,
-            false,
-            self.node_optional(self.alias_otherwise(keys), lax)?
-        )
+    pub fn parse_array_optional<T: AttrValue>(&mut self, keys: &[&str])  -> KeftaResult<Option<Vec<T>>> {
+        let array = self.parse_array(&keys)?;
+        if array.is_empty() { Ok(None) } else { Ok(Some(array)) }
+    }
+
+    pub fn parse_array_required<T: AttrValue>(&mut self, keys: &[&str])  -> KeftaResult<Vec<T>> {
+        let array = self.parse_array(&keys)?;
+        if array.is_empty() {
+            Err(KeftaError::Required {
+                key: keys[0].to_string(),
+                multiple: true
+            })
+        } else {
+            Ok(array)
+        }
+    }
+
+    pub fn parse_container<T: AttrStruct>(&mut self, keys: &[&str])  -> KeftaResult<T> {
+        let mut build = Vec::new();
+
+        for node in self.gather_nodes(&keys)? {
+            match node.data {
+                AttrTree::Container { nodes, .. } => build.extend(nodes),
+                _ => return Err(KeftaError::ExpectedContainer { ident: node.ident })
+            }
+        }
+
+        T::parse(build)
+    }
+
+    pub fn parse_with<T>(&mut self, keys: &[&str], func: fn(nodes: Vec<AttrNode>) -> KeftaResult<T>) -> KeftaResult<T> {
+        (func)(self.gather_nodes(&keys)?)
     }
 }

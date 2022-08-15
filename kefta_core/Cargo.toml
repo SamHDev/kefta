@@ -4,11 +4,14 @@ version = "0.1.0"
 edition = "2021"
 
 [features]
-default = ["literal"]
+default = ["literal", "util", "syn"]
+ident = []
 literal = ["litrs"]
+util = []
+syn = ["dep:syn"]
 
 [dependencies]
-#syn = { version = "1.0.98", features = ["full"] }
 #quote = "1.0.20"
 proc-macro2 = "1.0.43"
 litrs = { version = "0.2.3", optional = true }
+syn = { version = "1.0.98", features = ["full"], optional = true }

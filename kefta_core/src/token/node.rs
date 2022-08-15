@@ -1,4 +1,4 @@
-use proc_macro2::{Delimiter, TokenTree};
+use proc_macro2::{Delimiter, Group, TokenStream, TokenTree};
 use crate::error::KeftaTokenError;
 use crate::node::{AttrNode, AttrTree};
 use crate::token::{AttrTokenParse, AttrTokenStream};
@@ -103,5 +103,12 @@ impl AttrTokenParse for Vec<AttrNode> {
         }
 
         Ok(nodes)
+    }
+}
+
+impl AttrNode {
+    pub fn parse_root(stream: &mut AttrTokenStream) -> Result<Vec<AttrNode>, KeftaTokenError> {
+        let group = stream.parse::<Group>()?;
+        AttrTokenParse::parse(&mut AttrTokenStream::new(group.stream()))
     }
 }
