@@ -13,7 +13,7 @@ simplified attribute parsing w/ proc-macros
 - `syn` - syn support via `Syn<impl syn::Parse>`
 
 ### Examples
-```
+```rust
 use kefta::{Attr, parse_attr};
 
 // derive `Attr` onto your struct
@@ -71,7 +71,7 @@ pub fn test_macro(item: TokenStream) -> TokenStream {
 ```
 
 You can use attributes like so
-```no_compile
+```rust
 #[derive(Human)]
 #[human(name="Jimmy", value=10, alive)]
 #[human(jobs="foo", jobs="bar", jobs="baz")]
