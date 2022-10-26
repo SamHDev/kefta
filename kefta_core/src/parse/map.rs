@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 use crate::error::{KeftaResult};
 use crate::node::AttrNode;
 use crate::parse::AttrModel;
-use crate::parse::container::Named;
+use crate::parse::constructs::Named;
 
 type AttrMapInner = BTreeMap<String, Vec<AttrNode>>;
 

@@ -1,6 +1,6 @@
-use proc_macro::{TokenTree};
+use proc_macro::{TokenStream, TokenTree};
 use crate::error::{KeftaError, KeftaResult};
-use crate::node::AttrNode;
+use crate::node::{AttrContents, AttrNode};
 use crate::parse::model::AttrModel;
 
 
@@ -45,18 +45,44 @@ impl AttrValue for TokenTree {
 
             // parse single containers
             // e.g. [foo("Hello World")] == [foo="Hello World"]
-            AttrNode::Container { contents, .. } => if contents.len() == 1  {
-                match contents.into_iter().nth(0) {
+            AttrNode::Container { contents, .. } => {
+                // get node or parse stream
+                let node = match contents.parse() {
+                    Ok(x) => Some(x),
+                    Err(Ok(x)) => if x.len() == 1 {
+                        x.into_iter().nth(0)
+                    } else {
+                        return Err(KeftaError::Multiple)
+                    },
+                    Err(Err(e)) => return Err(KeftaError::ParseError(e)),
+                };
+
+                match node {
                     None => unreachable!(),
                     Some(AttrNode::Literal { value }) => Ok(value),
                     Some(AttrNode::Marker { ident }) => Ok(TokenTree::Ident(ident)),
                     _ => Err(KeftaError::ExpectedValue)
                 }
-            } else {
-                Err(KeftaError::Multiple)
             }
 
             _ => Err(KeftaError::ExpectedValue),
+        }
+    }
+}
+
+// token stream extract
+impl AttrValue for TokenStream {
+    fn parse(node: Option<AttrNode>) -> KeftaResult<Self> {
+        match <AttrNode as AttrValue>::parse(node)? {
+            AttrNode::Literal { value } | AttrNode::Value { value, ..} => {
+                match value {
+                    TokenTree::Group(group) => Ok(group.stream()),
+                    _ => Ok(TokenStream::from(value))
+                }
+            }
+            AttrNode::Container { contents: AttrContents::Stream(stream), .. } => Ok(stream),
+            _ => Err(KeftaError::ExpectedValue),
+
         }
     }
 }

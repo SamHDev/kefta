@@ -18,8 +18,12 @@ impl AttrModel for Named {
                 AttrNode::Value { value, .. } => {
                     build.push(AttrNode::Literal { value });
                 },
-                AttrNode::Container { mut contents, .. } => {
-                    build.append(&mut contents);
+                AttrNode::Container { contents, .. } => {
+                    match contents.parse() {
+                        Ok(node) => build.push(node),
+                        Err(Ok(mut nodes)) => build.append(&mut nodes),
+                        Err(Err(e)) => return Err(KeftaError::ParseError(e))
+                    }
                 }
                 _ => return Err(KeftaError::ExpectedNamed)
             }

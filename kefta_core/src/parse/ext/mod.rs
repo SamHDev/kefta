@@ -1,3 +1,4 @@
 #[cfg(feature="literal")]
 mod literal;
-mod _syn;
+#[cfg(feature = "syn")]
+pub(crate) mod _syn;

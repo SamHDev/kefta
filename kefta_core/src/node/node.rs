@@ -1,6 +1,7 @@
-use proc_macro::{Ident, Punct, Span};
+use proc_macro::{Ident, Punct, Span, TokenStream};
 use proc_macro::TokenTree;
 use std::fmt::{Debug, Formatter};
+use crate::node::{parse_body, ParseError, ParseTokenStream};
 
 pub enum AttrNode {
     /// No parse attached
@@ -43,9 +44,16 @@ pub enum AttrNode {
         /// if the container is tailfish (`::`)
         is_tailfish: bool,
         /// the contents of the container
-        contents: Vec<AttrNode>,
+        contents: AttrContents,
     }
 }
+
+#[derive(Debug)]
+pub enum AttrContents {
+    Stream(TokenStream),
+    Node(Box<AttrNode>)
+}
+
 
 impl AttrNode {
     pub fn ident(&self) -> Option<&Ident> {
@@ -63,6 +71,18 @@ impl AttrNode {
             AttrNode::Literal { value } => Some(value),
             AttrNode::Value { value, .. } => Some(value),
             AttrNode::Container { .. } => None,
+        }
+    }
+}
+
+impl AttrContents {
+    pub fn parse(self) -> Result<AttrNode, Result<Vec<AttrNode>, ParseError>> {
+        match self {
+            AttrContents::Stream(stream) => Err({
+                let mut stream = ParseTokenStream::wrap(stream);
+                parse_body(&mut stream)
+            }),
+            AttrContents::Node(node) => Ok(*node),
         }
     }
 }

@@ -1,6 +1,6 @@
-use proc_macro::TokenTree;
+use proc_macro::{TokenStream, TokenTree};
 use std::ops::Deref;
-use syn::parse::Parse;
+use syn::parse::{Parse, ParseBuffer, ParseStream};
 use crate::error::KeftaResult;
 use crate::node::AttrNode;
 use crate::parse::AttrModel;
@@ -21,11 +21,13 @@ impl<T> Into<T> for Syn<T> where T: Parse {
     }
 }
 
+/*
 impl<T> AttrModel for Syn<T> where T:Parse {
     fn parse(nodes: Vec<AttrNode>) -> KeftaResult<Self> {
         match <TokenTree as AttrModel>::parse(nodes) {
-            Ok(x) => {}
+            Ok(x) => T::parse(ParseBuffer::fr)
             Err(x) => {}
         }
     }
 }
+*/

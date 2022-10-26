@@ -1,5 +1,5 @@
 use proc_macro::{Delimiter, Ident, Spacing, TokenTree};
-use crate::node::AttrNode;
+use crate::node::{AttrContents, AttrNode};
 use crate::node::error::{ParseError, ParseErrorKind};
 use crate::node::stream::ParseTokenStream;
 
@@ -94,7 +94,7 @@ pub fn parse_content(ident: Ident, stream: &mut ParseTokenStream) -> Result<Attr
                                     // todo join if feature enabled
                                     group: punct.span(),
                                     is_tailfish: true,
-                                    contents: vec![contents]
+                                    contents: AttrContents::Node(Box::new(contents))
                                 })
 
                             } else {
@@ -118,15 +118,12 @@ pub fn parse_content(ident: Ident, stream: &mut ParseTokenStream) -> Result<Attr
             TokenTree::Group(group) => {
                 stream.skip();
                 if group.delimiter() == Delimiter::Parenthesis {
-                    // parse body
-                    let mut stream = ParseTokenStream::wrap(group.stream());
-
                     // parse contents and return container
                     Ok(AttrNode::Container {
                         ident,
                         group: group.span(),
                         is_tailfish: false,
-                        contents: parse_body(&mut stream)?
+                        contents: AttrContents::Stream(group.stream())
                     })
                 } else {
                     // invalid group type
