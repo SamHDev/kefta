@@ -4,7 +4,7 @@ fn main() {
     println!("Hello, world!");
 
     testing! {
-        bar("Hello World")
+        bar(name="Hello World", is_test=yes)
     }
 }
 

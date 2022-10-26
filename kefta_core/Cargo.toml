@@ -3,4 +3,12 @@ name = "kefta_core"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+literal = ["litrs"]
+syn = ["dep:syn"]
+
+default = ["literal"]
+
 [dependencies]
+litrs = { version = "^0.2.3", optional = true }
+syn = { version = "^1.0.103", optional = true }

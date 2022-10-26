@@ -47,6 +47,26 @@ pub enum AttrNode {
     }
 }
 
+impl AttrNode {
+    pub fn ident(&self) -> Option<&Ident> {
+        match self {
+            AttrNode::Marker { ident } => Some(ident),
+            AttrNode::Literal { .. } => None,
+            AttrNode::Value { ident, .. } => Some(ident),
+            AttrNode::Container { ident, .. } => Some(ident),
+        }
+    }
+
+    pub fn token_tree(&self) -> Option<&TokenTree> {
+        match self {
+            AttrNode::Marker { .. } => None,
+            AttrNode::Literal { value } => Some(value),
+            AttrNode::Value { value, .. } => Some(value),
+            AttrNode::Container { .. } => None,
+        }
+    }
+}
+
 impl Debug for AttrNode {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {
