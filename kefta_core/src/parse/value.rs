@@ -1,4 +1,4 @@
-use proc_macro::{TokenStream, TokenTree};
+use proc_macro::{Span, TokenStream, TokenTree};
 use crate::error::{KeftaError, KeftaResult};
 use crate::node::{AttrContents, AttrNode};
 use crate::parse::model::AttrModel;
@@ -12,7 +12,7 @@ pub trait AttrValue: Sized {
 impl AttrValue for AttrNode {
     fn parse(node: Option<AttrNode>) -> KeftaResult<Self> {
         match node {
-            None => Err(KeftaError::Expected),
+            None => Err(KeftaError::Expected(Default::default())),
             Some(node) => Ok(node)
         }
     }
@@ -30,7 +30,7 @@ impl<T> AttrModel for T where T: AttrValue {
             1 => <T as AttrValue>::parse(Some(nodes.into_iter().nth(0).unwrap())),
 
             // return if too many
-            _ => Err(KeftaError::Multiple)
+            _ => Err(KeftaError::Multiple(Default::default()))
         }
     }
 }
@@ -45,14 +45,14 @@ impl AttrValue for TokenTree {
 
             // parse single containers
             // e.g. [foo("Hello World")] == [foo="Hello World"]
-            AttrNode::Container { contents, .. } => {
+            AttrNode::Container { contents, container_type, ident, .. } => {
                 // get node or parse stream
-                let node = match contents.parse() {
+                let node = match contents.parse(ident, container_type) {
                     Ok(x) => Some(x),
                     Err(Ok(x)) => if x.len() == 1 {
                         x.into_iter().nth(0)
                     } else {
-                        return Err(KeftaError::Multiple)
+                        return Err(KeftaError::Multiple(Default::default()))
                     },
                     Err(Err(e)) => return Err(KeftaError::ParseError(e)),
                 };
@@ -61,11 +61,11 @@ impl AttrValue for TokenTree {
                     None => unreachable!(),
                     Some(AttrNode::Literal { value }) => Ok(value),
                     Some(AttrNode::Marker { ident }) => Ok(TokenTree::Ident(ident)),
-                    _ => Err(KeftaError::ExpectedValue)
+                    _ => Err(KeftaError::ExpectedValue(Default::default()))
                 }
             }
 
-            _ => Err(KeftaError::ExpectedValue),
+            _ => Err(KeftaError::ExpectedValue(Default::default())),
         }
     }
 }
@@ -81,7 +81,7 @@ impl AttrValue for TokenStream {
                 }
             }
             AttrNode::Container { contents: AttrContents::Stream(stream), .. } => Ok(stream),
-            _ => Err(KeftaError::ExpectedValue),
+            _ => Err(KeftaError::ExpectedValue(Default::default())),
 
         }
     }
@@ -117,7 +117,44 @@ impl AttrValue for bool {
         }
 
         Err(KeftaError::ExpectedType {
-            expected: Some("a marker or boolean value".into())
+            expected: Some("a marker or boolean value".into()),
+            context: Default::default()
+        })
+    }
+}
+
+#[cfg(feature="spanned")]
+impl AttrValue for (bool, Option<Span>) {
+    fn parse(node: Option<AttrNode>) -> KeftaResult<Self> {
+        match node {
+            None => return Ok((false, None)),
+
+            // is marker - return
+            Some(AttrNode::Marker { ident }) => return Ok((true, Some(ident.span()))),
+
+            // parse values
+            Some(AttrNode::Value { value, .. }) => match value {
+                // true/false yes/no
+                TokenTree::Ident(ident) => match ident.to_string().as_str() {
+                    "true" | "yes" => return Ok((true, Some(ident.span()))),
+                    "false" | "no" => return Ok((false, Some(ident.span()))),
+                    _ => ()
+                }
+
+                // 1 or 0
+                TokenTree::Literal(literal) => match literal.to_string().as_str() {
+                    "0" => return Ok((false, Some(literal.span()))),
+                    "1" => return Ok((true, Some(literal.span()))),
+                    _ => ()
+                }
+                _ => ()
+            },
+            _ => ()
+        }
+
+        Err(KeftaError::ExpectedType {
+            expected: Some("a marker or boolean value".into()),
+            context: Default::default()
         })
     }
 }
@@ -129,7 +166,8 @@ macro_rules! _token_tree_impl {
                 match <TokenTree as AttrValue>::parse(node)? {
                     TokenTree::$typ(x) => Ok(x),
                     _ => Err(KeftaError::ExpectedType {
-                        expected: Some($err.into())
+                        expected: Some($err.into()),
+                        context: Default::default()
                     })
                 }
             }

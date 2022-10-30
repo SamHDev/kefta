@@ -7,5 +7,6 @@ edition = "2021"
 proc-macro = true
 
 [dependencies]
-kefta_core = { path = "../../kefta_core" }
+kefta = { path = "../../kefta", features = ["syn"] }
+syn = "1.0.103"
 quote = "1.0.21"

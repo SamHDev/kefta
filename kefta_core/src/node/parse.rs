@@ -1,6 +1,7 @@
 use proc_macro::{Delimiter, Ident, Spacing, TokenTree};
 use crate::node::{AttrContents, AttrNode};
 use crate::node::error::{ParseError, ParseErrorKind};
+use crate::node::node::ContainerType;
 use crate::node::stream::ParseTokenStream;
 
 pub fn parse_body(stream: &mut ParseTokenStream) -> Result<Vec<AttrNode>, ParseError> {
@@ -93,7 +94,7 @@ pub fn parse_content(ident: Ident, stream: &mut ParseTokenStream) -> Result<Attr
                                     ident,
                                     // todo join if feature enabled
                                     group: punct.span(),
-                                    is_tailfish: true,
+                                    container_type: ContainerType::Tailfish,
                                     contents: AttrContents::Node(Box::new(contents))
                                 })
 
@@ -122,7 +123,7 @@ pub fn parse_content(ident: Ident, stream: &mut ParseTokenStream) -> Result<Attr
                     Ok(AttrNode::Container {
                         ident,
                         group: group.span(),
-                        is_tailfish: false,
+                        container_type: ContainerType::Grouped,
                         contents: AttrContents::Stream(group.stream())
                     })
                 } else {

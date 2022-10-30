@@ -1,6 +1,9 @@
 [workspace]
 members = [
     "kefta_core",
+    "kefta_macro",
+
+    "kefta",
 
     "test/test_bin",
     "test/test_macro"

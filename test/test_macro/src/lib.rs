@@ -1,38 +1,25 @@
 use proc_macro::TokenStream;
-use kefta_core::error::KeftaResult;
-use kefta_core::node::{AttrNode, parse_body, ParseTokenStream};
-use kefta_core::parse::{AttrMap, AttrModel};
+use syn::DeriveInput;
+use kefta::{AttrModel, parse_attr_tokens};
 
-#[proc_macro]
-pub fn testing(tokens: TokenStream) -> TokenStream {
-
-    let mut stream = ParseTokenStream::wrap(tokens.into());
-    let body = parse_body(&mut stream).unwrap();
-
-    let model = Model::parse(body).unwrap();
-    println!("{:?}", model);
+#[proc_macro_derive(ExampleMacro, attributes(attr))]
+pub fn derive_test(item: TokenStream) -> TokenStream {
+    // parse with `syn`
+    let input = syn::parse_macro_input!(item as DeriveInput);
+    parse_attr_tokens!(input.attrs => ExampleModel);
 
     TokenStream::new()
 }
 
-#[derive(Debug)]
-struct Model {
-    pub name: String,
-    pub is_test: bool,
-}
 
-impl AttrModel for Model {
-    fn parse(nodes: Vec<AttrNode>) -> KeftaResult<Self> {
-        println!("{:?}", nodes);
+#[derive(AttrModel)]
+#[kefta(namespace="eg")]
+struct ExampleModel {
+    #[kefta(value)]
+    pub value: String,
 
-        let mut _root = AttrMap::new(nodes);
-        println!("{:?}", _root);
-        let mut _ns = AttrMap::new_named(_root.get(Some("bar")))?;
-        println!("{:?}", _ns);
+    pub description: Option<String>,
 
-        Ok(Self {
-            name: <String as AttrModel>::parse(_ns.get(Some("name")))?,
-            is_test: <bool as AttrModel>::parse(_ns.get(Some("is_test")))?
-        })
-    }
+    #[kefta(default)]
+    pub number: u64
 }

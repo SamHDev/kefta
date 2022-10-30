@@ -1,7 +1,7 @@
 use proc_macro::{Ident, Punct, Span, TokenStream};
 use proc_macro::TokenTree;
 use std::fmt::{Debug, Formatter};
-use crate::node::{parse_body, ParseError, ParseTokenStream};
+use crate::node::{parse_body, parse_content, ParseError, ParseTokenStream};
 
 pub enum AttrNode {
     /// No parse attached
@@ -42,18 +42,43 @@ pub enum AttrNode {
         /// the group span
         group: Span,
         /// if the container is tailfish (`::`)
-        is_tailfish: bool,
+        container_type: ContainerType,
         /// the contents of the container
         contents: AttrContents,
     }
 }
 
-#[derive(Debug)]
 pub enum AttrContents {
     Stream(TokenStream),
     Node(Box<AttrNode>)
 }
 
+impl Debug for AttrContents {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match &self {
+            AttrContents::Stream(x) =>
+                f.debug_tuple("Stream")
+                    .field(&x.to_string())
+                    .finish(),
+            AttrContents::Node(x) =>
+                f.debug_tuple("Node")
+                    .field(&x)
+                    .finish(),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum ContainerType {
+    /// a group container `ident(...)`
+    Grouped,
+    /// a tailfish container `ident::foo`
+    Tailfish,
+    /// a implicit/root container
+    ///
+    /// when parsing recurse until valid container
+    Implicit
+}
 
 impl AttrNode {
     pub fn ident(&self) -> Option<&Ident> {
@@ -76,12 +101,26 @@ impl AttrNode {
 }
 
 impl AttrContents {
-    pub fn parse(self) -> Result<AttrNode, Result<Vec<AttrNode>, ParseError>> {
+    pub fn parse(self, ident: Ident, container_type: ContainerType) -> Result<AttrNode, Result<Vec<AttrNode>, ParseError>> {
         match self {
-            AttrContents::Stream(stream) => Err({
+            AttrContents::Stream(stream) => {
                 let mut stream = ParseTokenStream::wrap(stream);
-                parse_body(&mut stream)
-            }),
+
+                if container_type == ContainerType::Implicit {
+                    match parse_content(ident, &mut stream) {
+                        // recurse container
+                        Ok(AttrNode::Container { contents, container_type, ident, .. }) =>
+                            contents.parse(ident, container_type),
+
+                        // return
+                        Ok(x) => Ok(x),
+                        Err(e) => Err(Err(e))
+                    }
+                } else {
+                    Err(parse_body(&mut stream))
+                }
+
+            },
             AttrContents::Node(node) => Ok(*node),
         }
     }
@@ -103,10 +142,10 @@ impl Debug for AttrNode {
                     .field(&ident.to_string())
                     .field(&value.to_string())
                     .finish(),
-            AttrNode::Container { ident, contents, is_tailfish, .. } =>
+            AttrNode::Container { ident, contents, container_type, .. } =>
                 f.debug_tuple("Container")
                     .field(&ident.to_string())
-                    .field(&is_tailfish)
+                    .field(&container_type)
                     .field(&contents)
                     .finish(),
         }

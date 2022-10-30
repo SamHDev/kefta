@@ -1,8 +1,8 @@
-use std::collections::BTreeMap;
+use std::collections::btree_map::BTreeMap;
 use crate::error::{KeftaResult};
 use crate::node::AttrNode;
 use crate::parse::AttrModel;
-use crate::parse::constructs::Named;
+use crate::parse::constructs::AttrNamed;
 
 type AttrMapInner = BTreeMap<String, Vec<AttrNode>>;
 
@@ -29,7 +29,7 @@ impl AttrMap {
     }
 
     pub fn new_named(nodes: Vec<AttrNode>) -> KeftaResult<Self> {
-        let named = Named::parse(nodes)?;
+        let named = AttrNamed::parse(nodes)?;
         Ok(Self::new(named.nodes))
     }
 }
@@ -46,4 +46,19 @@ impl AttrMap {
         }
         build
     }
+
+    pub fn rest(self) -> Vec<AttrNode> {
+        let mut build = Vec::new();
+        for (_x, mut y) in self.map {
+            build.append(&mut y);
+        }
+        build
+    }
+
+    /*pub fn get_parse<T: AttrModel>(&mut self, key: Option<&str>) -> T {
+        match T::parse(self.get(key)) {
+            Ok(x) => Ok(x),
+            Err(e) => e.add_ctx_key(key).add_ctx_span()
+        }
+    }*/
 }

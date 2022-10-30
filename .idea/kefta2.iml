@@ -7,6 +7,8 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/test/test_bin/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/test/test_macro/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/kefta_macro/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/kefta/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />

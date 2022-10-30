@@ -1,0 +1,17 @@
+[package]
+name = "kefta"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+derive = ["kefta_macro"]
+
+spanned = ["kefta_core/spanned"]
+syn = ["kefta_core/syn"]
+literal = ["kefta_core/literal"]
+
+default = ["derive", "literal", "spanned"]
+
+[dependencies]
+kefta_core = {  path = "../kefta_core" }
+kefta_macro = { path = "../kefta_macro", optional = true }

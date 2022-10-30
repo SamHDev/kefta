@@ -1,10 +1,9 @@
-use test_macro::testing;
+use test_macro::ExampleMacro;
 
 fn main() {
     println!("Hello, world!");
 
-    testing! {
-        bar(name="Hello World", is_test=yes)
-    }
 }
 
+#[derive(ExampleMacro)]
+pub struct Target;

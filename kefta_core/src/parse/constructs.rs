@@ -1,12 +1,12 @@
 use crate::error::{KeftaError, KeftaResult};
 use crate::node::AttrNode;
-use crate::parse::AttrModel;
+use crate::parse::{AttrModel};
 
-pub struct Named {
+pub struct AttrNamed {
     pub nodes: Vec<AttrNode>
 }
 
-impl AttrModel for Named {
+impl AttrModel for AttrNamed {
     fn parse(nodes: Vec<AttrNode>) -> KeftaResult<Self> {
         let mut build = Vec::new();
 
@@ -18,17 +18,28 @@ impl AttrModel for Named {
                 AttrNode::Value { value, .. } => {
                     build.push(AttrNode::Literal { value });
                 },
-                AttrNode::Container { contents, .. } => {
-                    match contents.parse() {
+                AttrNode::Container { contents, ident, container_type, .. } => {
+                    match contents.parse(ident, container_type) {
                         Ok(node) => build.push(node),
                         Err(Ok(mut nodes)) => build.append(&mut nodes),
                         Err(Err(e)) => return Err(KeftaError::ParseError(e))
                     }
                 }
-                _ => return Err(KeftaError::ExpectedNamed)
+                _ => return Err(KeftaError::ExpectedNamed(Default::default()))
             }
         }
 
-        Ok(Named { nodes: build })
+        Ok(AttrNamed { nodes: build })
     }
 }
+
+/*pub struct AttrDefault<T>(pub T) where T: Default + AttrValue;
+
+impl<T> AttrValue for AttrDefault<T> where T: Default + AttrValue {
+    fn parse(node: Option<AttrNode>) -> KeftaResult<Self> {
+        match node {
+            None => Ok(Self(T::default())),
+            x @ Some(_) => T::parse(x).map(Self),
+        }
+    }
+}*/
