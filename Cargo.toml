@@ -5,6 +5,6 @@ members = [
 
     "kefta",
 
-    "test/test_bin",
-    "test/test_macro"
+    #"test/test_bin",
+    #"test/test_macro"
 ]

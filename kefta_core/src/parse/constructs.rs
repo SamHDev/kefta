@@ -1,4 +1,4 @@
-use crate::error::{KeftaError, KeftaResult};
+use crate::error::{KeftaErrorKind, KeftaResult};
 use crate::node::AttrNode;
 use crate::parse::{AttrModel};
 
@@ -22,10 +22,10 @@ impl AttrModel for AttrNamed {
                     match contents.parse(ident, container_type) {
                         Ok(node) => build.push(node),
                         Err(Ok(mut nodes)) => build.append(&mut nodes),
-                        Err(Err(e)) => return Err(KeftaError::ParseError(e))
+                        Err(Err(e)) => return Err(e.into())
                     }
                 }
-                _ => return Err(KeftaError::ExpectedNamed(Default::default()))
+                _ => return Err(KeftaErrorKind::ExpectedNamed.into())
             }
         }
 

@@ -1,6 +1,6 @@
 [package]
 name = "kefta"
-version = "0.1.0"
+version = "0.2.0-dev0"
 edition = "2021"
 
 [features]
@@ -13,5 +13,5 @@ literal = ["kefta_core/literal"]
 default = ["derive", "literal", "spanned"]
 
 [dependencies]
-kefta_core = {  path = "../kefta_core" }
-kefta_macro = { path = "../kefta_macro", optional = true }
+kefta_core = { path = "../kefta_core", version = "0.2.0-dev0" }
+kefta_macro = { path = "../kefta_macro", optional = true, version = "0.2.0-dev0" }

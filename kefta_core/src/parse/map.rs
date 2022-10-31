@@ -58,7 +58,7 @@ impl AttrMap {
     /*pub fn get_parse<T: AttrModel>(&mut self, key: Option<&str>) -> T {
         match T::parse(self.get(key)) {
             Ok(x) => Ok(x),
-            Err(e) => e.add_ctx_key(key).add_ctx_span()
+            Err(e) => e,
         }
     }*/
 }

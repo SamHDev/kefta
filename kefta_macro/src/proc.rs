@@ -26,9 +26,15 @@ pub fn process(model: ModelAttr, data: DataStruct, ident: Ident, generics: Gener
             let lit = Literal::string(&name);
             let lit = TokenStream2::from(TokenStream::from(TokenTree::Literal(lit)));
 
-            constructor.extend(quote!(let mut #ident = kefta::AttrMap::new_named( _k_ns0.get(Some(#lit)) )?; ));
+            constructor.extend(quote!(
+                let mut #ident = kefta::AttrMap::new_named( _k_ns0.get(Some(#lit)) )?;
+                //println!("{} - {:?}", stringify!(#ident), #ident);
+            ));
         } else {
-            constructor.extend(quote!(let mut #ident = kefta::AttrMap::new(_k_nodes); ));
+            constructor.extend(quote!(
+                let mut #ident = kefta::AttrMap::new(_k_nodes);
+                //println!("{} - {:?}", stringify!(#ident), #ident);
+            ));
         }
     }
 

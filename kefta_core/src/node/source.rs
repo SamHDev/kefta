@@ -1,5 +1,5 @@
 use proc_macro::{Ident, TokenStream};
-use crate::error::KeftaError;
+use crate::error::{KeftaError};
 use crate::node::{AttrContents, AttrNode, ContainerType, parse_body, ParseTokenStream};
 
 pub trait AttrSource {
@@ -15,7 +15,7 @@ impl AttrSource for Vec<AttrNode> {
 impl AttrSource for TokenStream {
     fn parse(self) -> Result<Vec<AttrNode>, KeftaError> {
         let mut stream = ParseTokenStream::wrap(self);
-        parse_body(&mut stream).map_err(KeftaError::ParseError)
+        parse_body(&mut stream).map_err(|x| x.into())
     }
 }
 

@@ -24,7 +24,7 @@ pub fn attr_model(item: TokenStream) -> TokenStream {
     return if let Data::Struct(data) = input.data {
         match process(attrs, data, ident, generics) {
             Ok(x) => {
-                println!("{}", x.to_string());
+                //println!("{}", x.to_string());
                 x.into()
             },
             Err(e) => e.to_compile_error().into()

@@ -1,7 +1,6 @@
 use std::collections::btree_map::BTreeMap;
 use crate::error::{KeftaResult};
 use crate::node::AttrNode;
-use crate::parse::AttrValue;
 
 pub trait AttrModel: Sized {
     fn parse(nodes: Vec<AttrNode>) -> KeftaResult<Self>;
@@ -27,11 +26,11 @@ impl<T> AttrModel for Option<T> where T: AttrModel {
 }
 
 // array model
-impl<T> AttrModel for Vec<T> where T: AttrValue {
+impl<T> AttrModel for Vec<T> where T: AttrModel {
     fn parse(nodes: Vec<AttrNode>) -> KeftaResult<Self> {
         let mut build = Vec::new();
         for node in nodes {
-            build.push(T::parse(Some(node))?);
+            build.push(T::parse(vec![node])?);
         }
         Ok(build)
     }

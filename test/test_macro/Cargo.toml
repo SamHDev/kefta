@@ -8,5 +8,5 @@ proc-macro = true
 
 [dependencies]
 kefta = { path = "../../kefta", features = ["syn"] }
-syn = "1.0.103"
+syn = { version = "1.0.103", features = ["extra-traits"] }
 quote = "1.0.21"
