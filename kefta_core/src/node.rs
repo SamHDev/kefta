@@ -1,5 +1,4 @@
-use proc_macro2::{Ident, Punct, TokenStream, TokenTree};
-use syn::token::Group;
+use proc_macro2::{Group, Ident, Punct, TokenStream, TokenTree};
 
 #[derive(Debug)]
 pub struct AttrIdent {

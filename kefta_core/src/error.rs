@@ -1,6 +1,6 @@
 use proc_macro2::{Span, TokenTree};
 
-pub enum KeftaError {
+pub enum ParseError {
     InvalidPath {
         token: TokenTree
     },
