@@ -3,8 +3,12 @@ name = "kefta_core"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+syn-literal = ["syn"]
+syn-derive = ["syn/derive"]
+syn-full = ["syn/full"]
 
 [dependencies]
-syn = { version = "2.0.28", features = ["derive"] }
+syn = { version = "2.0.33", default-features = false, optional =  true }
 quote = "1.0.32"
 proc-macro2 = "1.0.66"
