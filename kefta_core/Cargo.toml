@@ -4,9 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [features]
-syn-literal = ["syn"]
-syn-derive = ["syn/derive"]
-syn-full = ["syn/full"]
+syn = ["dep:syn", "syn/parsing", "syn/derive", "syn/full", "syn/printing"]
 
 [dependencies]
 syn = { version = "2.0.33", default-features = false, optional =  true }
