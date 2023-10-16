@@ -1,59 +1,86 @@
+use std::borrow::Cow;
 use std::marker::PhantomData;
-use crate::model::error::MetaError;
-use crate::model::{FromMeta, MetaReceiver};
+use crate::model::from::{FromMeta, FromMetaCollect};
+use crate::model::visitor::MetaVisitor;
 
-/// a 'domain' of a source, representing it's value type
 pub trait MetaDomain {
-    fn to_string(&self) -> String;
+    fn as_error_string(&self) -> Cow<str>;
 }
 
-/// a source of a meta tree
-///
-/// this trait is generic over 'D', representing it's value type
-pub trait MetaSource<Domain> where Domain: MetaDomain {
-    /// the error that this source may produce.
-    type Error: MetaError;
+pub trait MetaSource<T> where T: MetaDomain {
+    type Error;
 
-    /// drive a `MetaVisitor` from a source.
     fn visit<V>(self, visitor: V) -> Result<V::Output, Self::Error>
-        where V: MetaReceiver<Domain=Domain>;
+        where V: MetaVisitor<T>;
 }
 
-/// access to a list of a meta trees
-///
-/// this trait is generic over 'D', representing it's value type
-pub trait MetaAccess<Domain> where Domain: MetaDomain {
+pub trait MetaAccess<T> where T: MetaDomain {
+    type Error;
 
-    /// the error that this source may produce.
-    type Error: MetaError;
+    fn next<R>(&mut self, receiver: R) -> Option<Result<R::Output, Self::Error>>
+        where R: MetaReceiver<T>;
 
-    /// whether the access has values remaining.
-    ///
-    /// this is intended to be used in a while loop
-    ///
-    /// ```
-    /// # struct _ExampleShim;
-    /// # impl _ExampleShim { fn remaining(&self) -> bool { false } }
-    /// # let access = _ExampleShim;
-    ///
-    /// while access.remaining() {
-    ///     /* ... */
-    /// }
-    fn remaining(&mut self) -> bool;
+    fn next_from<F>(&mut self) -> Option<Result<F, Self::Error>>
+        where F: FromMeta<T>
+    {
 
-    /// visit the next value in the list
-    ///
-    /// when no values are remaining, this returns `None`
-    fn visit_next<V>(&mut self, visitor: V) -> Result<V::Output, Self::Error>
-        where V: MetaReceiver<Domain=Domain>;
-}
+        struct _Recv<_T, _F>(PhantomData<(_T, _F)>);
 
-impl<'a, Domain, A> MetaSource<Domain> for &'a mut A
-    where A: MetaAccess<Domain>, Domain: MetaDomain
-{
-    type Error = A::Error;
+        impl<_T, _F> MetaReceiver<_T> for _Recv<_T, _F>
+            where _T: MetaDomain, _F: FromMeta<_T>
+        {
+            type Output = _F;
 
-    fn visit<V>(self, visitor: V) -> Result<V::Output, Self::Error> where V: MetaReceiver<Domain=Domain> {
-        self.visit_next(visitor)
+            fn receive<S>(self, source: S) -> Result<Self::Output, S::Error> where S: MetaSource<_T> {
+                _F::from_meta(source)
+            }
+        }
+
+        self.next(_Recv(PhantomData))
     }
+
+    fn next_from_collect<F>(&mut self, value: Option<F>) -> Option<Result<F, Self::Error>>
+        where F: FromMetaCollect<T>
+    {
+
+        struct _Recv<_T, _F>(PhantomData<_T>, Option<_F>);
+
+        impl<_T, _F> MetaReceiver<_T> for _Recv<_T, _F>
+            where _T: MetaDomain, _F: FromMetaCollect<_T>
+        {
+            type Output = _F;
+
+            fn receive<S>(self, source: S) -> Result<Self::Output, S::Error> where S: MetaSource<_T> {
+                _F::from_meta_collect(self.1, source)
+            }
+        }
+
+        self.next(_Recv(PhantomData, value))
+    }
+
+    fn next_visit<V>(&mut self, visitor: V) -> Option<Result<V::Output, Self::Error>>
+        where V: MetaVisitor<T>
+    {
+
+        struct _Recv<_T, _V>(PhantomData<_T>, _V);
+
+        impl<_T, _V> MetaReceiver<_T> for _Recv<_T, _V>
+            where _T: MetaDomain, _V: MetaVisitor<_T>
+        {
+            type Output = _V::Output;
+
+            fn receive<S>(self, source: S) -> Result<Self::Output, S::Error> where S: MetaSource<_T> {
+                source.visit(self.1)
+            }
+        }
+
+        self.next(_Recv(PhantomData, visitor))
+    }
+}
+
+pub trait MetaReceiver<T> where T: MetaDomain {
+    type Output;
+
+    fn receive<S>(self, source: S) -> Result<Self::Output, S::Error>
+        where S: MetaSource<T>;
 }
