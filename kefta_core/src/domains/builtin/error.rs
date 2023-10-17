@@ -1,28 +1,47 @@
-use std::fmt::Display;
-use proc_macro2::{Punct, Span, TokenStream, TokenTree};
 use crate::model::{MetaError, MetaExpected};
+use proc_macro2::{Punct, Span, TokenStream, TokenTree};
+use std::fmt::Display;
 
 #[derive(Debug)]
-pub enum BuiltinParserError<E> where E: MetaError {
+pub enum BuiltinParserError<E>
+where
+    E: MetaError,
+{
     Error(E),
 
-    EndOfInput { span: Option<Span> },
+    EndOfInput {
+        span: Option<Span>,
+    },
 
     /// invalid token when parsing the root expression
-    InvalidRootExpr { token: TokenTree },
+    InvalidRootExpr {
+        token: TokenTree,
+    },
     ///  invalid expression when parsing value
-    InvalidExpr { token: TokenTree },
+    InvalidExpr {
+        token: TokenTree,
+    },
 
     /// path segment was invalid
-    ExpectedTailfish { token: TokenTree, first: Punct },
+    ExpectedTailfish {
+        token: TokenTree,
+        first: Punct,
+    },
 
     /// expected path ident
-    ExpectedIdent { token: TokenTree },
+    ExpectedIdent {
+        token: TokenTree,
+    },
 
-    ExpectedDelimiter { token: TokenTree }
+    ExpectedDelimiter {
+        token: TokenTree,
+    },
 }
 
-impl<E> MetaError for BuiltinParserError<E> where E: MetaError {
+impl<E> MetaError for BuiltinParserError<E>
+where
+    E: MetaError,
+{
     fn into_token_stream(self) -> TokenStream {
         self.into_error().into_token_stream()
     }
@@ -40,33 +59,42 @@ impl<E> MetaError for BuiltinParserError<E> where E: MetaError {
     }
 }
 
-impl<E> BuiltinParserError<E> where E: MetaError {
+impl<E> BuiltinParserError<E>
+where
+    E: MetaError,
+{
     fn into_error(self) -> E {
         match self {
             BuiltinParserError::Error(e) => e,
-            BuiltinParserError::EndOfInput { span } =>
-                E::custom(span, "invalid sequence: unexpected end of input"),
-            BuiltinParserError::InvalidRootExpr { token } |
-            BuiltinParserError::InvalidExpr { token } =>
-                E::custom(
-                    Some(token.span()),
-                    format_args!("invalid sequence: unexpected token when parsing meta-expression ({token})")
+            BuiltinParserError::EndOfInput { span } => {
+                E::custom(span, "invalid sequence: unexpected end of input")
+            }
+            BuiltinParserError::InvalidRootExpr { token }
+            | BuiltinParserError::InvalidExpr { token } => E::custom(
+                Some(token.span()),
+                format_args!(
+                    "invalid sequence: unexpected token when parsing meta-expression ({token})"
                 ),
-            BuiltinParserError::ExpectedTailfish { token, first } =>
-                E::custom(
-                    Some(token.span().join(first.span()).unwrap_or_else(|| token.span())),
-                    format_args!("invalid sequence: expected path delimiter (`tailfish ::`), found ({token})")
+            ),
+            BuiltinParserError::ExpectedTailfish { token, first } => E::custom(
+                Some(
+                    token
+                        .span()
+                        .join(first.span())
+                        .unwrap_or_else(|| token.span()),
                 ),
-            BuiltinParserError::ExpectedIdent { token } =>
-                E::custom(
-                    Some(token.span()),
-                    format_args!("invalid sequence: expected path identifier, found ({token})")
+                format_args!(
+                    "invalid sequence: expected path delimiter (`tailfish ::`), found ({token})"
                 ),
-            BuiltinParserError::ExpectedDelimiter { token } =>
-                E::custom(
-                    Some(token.span()),
-                    format_args!("invalid sequence: expected delimiter (comma `,`), found ({token})")
-                ),
+            ),
+            BuiltinParserError::ExpectedIdent { token } => E::custom(
+                Some(token.span()),
+                format_args!("invalid sequence: expected path identifier, found ({token})"),
+            ),
+            BuiltinParserError::ExpectedDelimiter { token } => E::custom(
+                Some(token.span()),
+                format_args!("invalid sequence: expected delimiter (comma `,`), found ({token})"),
+            ),
         }
     }
 }

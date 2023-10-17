@@ -1,7 +1,7 @@
-use proc_macro2::{Span, TokenStream, TokenTree};
 use crate::domains::builtin::error::BuiltinParserError;
 use crate::domains::builtin::parser::BuiltinParser;
 use crate::model::{MetaAccess, MetaDomain, MetaError, MetaReceiver, MetaSource, MetaVisitor};
+use proc_macro2::{Span, TokenStream, TokenTree};
 
 pub type _Error = (Option<Span>, String);
 
@@ -14,11 +14,13 @@ impl MetaDomain for TokenTree {
     }
 }
 
-
 impl MetaSource<TokenTree> for TokenStream {
     type Error = BuiltinParserError<_Error>;
 
-    fn visit<V>(self, visitor: V) -> Result<V::Output, Self::Error> where V: MetaVisitor<Domain=TokenTree> {
+    fn visit<V>(self, visitor: V) -> Result<V::Output, Self::Error>
+    where
+        V: MetaVisitor<Domain = TokenTree>,
+    {
         let mut parser = BuiltinParser::new(self, None);
 
         let token = parser.next();
@@ -26,51 +28,77 @@ impl MetaSource<TokenTree> for TokenStream {
     }
 }
 
-
-pub(crate) struct BuiltinSource<'a, E> where E: MetaError {
+pub(crate) struct BuiltinSource<'a, E>
+where
+    E: MetaError,
+{
     parser: &'a mut BuiltinParser<E>,
 }
 
-impl<'a, E> MetaSource<TokenTree> for BuiltinSource<'a, E> where E: MetaError {
+impl<'a, E> MetaSource<TokenTree> for BuiltinSource<'a, E>
+where
+    E: MetaError,
+{
     type Error = BuiltinParserError<E>;
 
-    fn visit<V>(self, visitor: V) -> Result<V::Output, Self::Error> where V: MetaVisitor<Domain=TokenTree> {
+    fn visit<V>(self, visitor: V) -> Result<V::Output, Self::Error>
+    where
+        V: MetaVisitor<Domain = TokenTree>,
+    {
         let token = self.parser.next();
         self.parser.parse_item(token, visitor)
     }
 }
 
-pub(crate) struct BuiltinContSource<'a, E> where E: MetaError {
+pub(crate) struct BuiltinContSource<'a, E>
+where
+    E: MetaError,
+{
     pub(crate) parser: &'a mut BuiltinParser<E>,
 }
 
-impl<'a, E> MetaSource<TokenTree> for BuiltinContSource<'a, E> where E: MetaError {
+impl<'a, E> MetaSource<TokenTree> for BuiltinContSource<'a, E>
+where
+    E: MetaError,
+{
     type Error = BuiltinParserError<E>;
 
-    fn visit<V>(self, visitor: V) -> Result<V::Output, Self::Error> where V: MetaVisitor<Domain=TokenTree> {
+    fn visit<V>(self, visitor: V) -> Result<V::Output, Self::Error>
+    where
+        V: MetaVisitor<Domain = TokenTree>,
+    {
         let token = self.parser.next();
         self.parser.parse_item_cont(token, visitor)
     }
 }
 
-pub(crate) struct BuiltinAccess<'a, E> where E: MetaError {
+pub(crate) struct BuiltinAccess<'a, E>
+where
+    E: MetaError,
+{
     pub(crate) parser: &'a mut BuiltinParser<E>,
 }
 
-
-impl<'a, E> MetaAccess<TokenTree> for BuiltinAccess<'a, E> where E: MetaError {
+impl<'a, E> MetaAccess<TokenTree> for BuiltinAccess<'a, E>
+where
+    E: MetaError,
+{
     type Error = BuiltinParserError<E>;
 
-    fn next<R>(&mut self, receiver: R) -> Option<Result<R::Output, Self::Error>> where R: MetaReceiver<TokenTree> {
-
+    fn next<R>(&mut self, receiver: R) -> Option<Result<R::Output, Self::Error>>
+    where
+        R: MetaReceiver<TokenTree>,
+    {
         match self.parser.next() {
             None => None,
 
-            Some(TokenTree::Punct(punct)) if punct.as_char() == ',' =>
-                Some(receiver.receive(BuiltinSource { parser: self.parser })),
+            Some(TokenTree::Punct(punct)) if punct.as_char() == ',' => {
+                Some(receiver.receive(BuiltinSource {
+                    parser: self.parser,
+                }))
+            }
 
-            Some(token) => Some(Err(BuiltinParserError::ExpectedDelimiter { token }))
+            Some(token) => Some(Err(BuiltinParserError::ExpectedDelimiter { token })),
         }
-
     }
 }

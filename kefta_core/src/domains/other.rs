@@ -1,6 +1,6 @@
-use std::fmt::Display;
-use proc_macro2::{Delimiter, Group, Ident, Literal, Punct, Spacing, Span, TokenStream, TokenTree};
 use crate::model::{MetaDomain, MetaError};
+use proc_macro2::{Delimiter, Group, Ident, Literal, Punct, Spacing, Span, TokenStream, TokenTree};
+use std::fmt::Display;
 
 #[allow(clippy::needless_lifetimes)]
 impl MetaDomain for TokenStream {
@@ -32,15 +32,18 @@ pub(crate) fn _build_compile_error(span: Option<Span>, message: String) -> Token
     let _macro_group = {
         Group::new(
             Delimiter::Parenthesis,
-            TokenStream::from(TokenTree::Literal(_macro_lit))
+            TokenStream::from(TokenTree::Literal(_macro_lit)),
         )
     };
 
-    stream.extend([
-        TokenTree::Ident(_macro_ident),
-        TokenTree::Punct(_macro_punct),
-        TokenTree::Group(_macro_group)
-    ].into_iter());
+    stream.extend(
+        [
+            TokenTree::Ident(_macro_ident),
+            TokenTree::Punct(_macro_punct),
+            TokenTree::Group(_macro_group),
+        ]
+        .into_iter(),
+    );
 
     stream
 }
@@ -48,7 +51,6 @@ pub(crate) fn _build_compile_error(span: Option<Span>, message: String) -> Token
 impl MetaError for String {
     fn into_token_stream(self) -> TokenStream {
         _build_compile_error(None, self)
-
     }
 
     fn custom(_span: Option<Span>, message: impl Display) -> Self {

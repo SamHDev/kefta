@@ -1,26 +1,38 @@
-use std::fmt;
-use proc_macro2::{Span, TokenStream};
 use crate::model::visitor::MetaVisitor;
+use proc_macro2::{Span, TokenStream};
+use std::fmt;
 
 pub trait MetaError: Sized {
     fn into_token_stream(self) -> TokenStream;
 
     fn custom(span: Option<Span>, message: impl fmt::Display) -> Self;
 
-    fn expecting(span: Option<Span>, expected: impl MetaExpected, found: impl fmt::Display) -> Self {
-        Self::custom(span, format_args!(
-            "expected: {}, found {}",
-            &expected as &dyn MetaExpected,
-            found
-        ))
+    fn expecting(
+        span: Option<Span>,
+        expected: impl MetaExpected,
+        found: impl fmt::Display,
+    ) -> Self {
+        Self::custom(
+            span,
+            format_args!(
+                "expected: {}, found {}",
+                &expected as &dyn MetaExpected, found
+            ),
+        )
     }
 
-    fn invalid_value(span: Option<Span>, expected: impl MetaExpected, error: impl fmt::Display) -> Self {
-        Self::custom(span, format_args!(
-            "invalid value: {}, expected {}",
-            error,
-            &expected as &dyn MetaExpected,
-        ))
+    fn invalid_value(
+        span: Option<Span>,
+        expected: impl MetaExpected,
+        error: impl fmt::Display,
+    ) -> Self {
+        Self::custom(
+            span,
+            format_args!(
+                "invalid value: {}, expected {}",
+                error, &expected as &dyn MetaExpected,
+            ),
+        )
     }
 }
 
@@ -34,7 +46,10 @@ impl<'a> fmt::Display for dyn MetaExpected + 'a {
     }
 }
 
-impl<V> MetaExpected for V where V: MetaVisitor {
+impl<V> MetaExpected for V
+where
+    V: MetaVisitor,
+{
     fn expected(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.expecting(f)
     }
