@@ -1,25 +1,30 @@
-use std::borrow::Cow;
+use std::fmt;
 use std::marker::PhantomData;
 use crate::model::from::{FromMeta, FromMetaCollect};
+use crate::model::MetaError;
 use crate::model::visitor::MetaVisitor;
 
+#[allow(clippy::needless_lifetimes)]
 pub trait MetaDomain {
-    fn as_error_string(&self) -> Cow<str>;
+    type ErrorDisplay<'a>: fmt::Display where Self: 'a;
+
+    fn as_error_display<'a>(&'a self) -> Self::ErrorDisplay<'a>;
 }
 
 pub trait MetaSource<T> where T: MetaDomain {
-    type Error;
+    type Error: MetaError;
 
     fn visit<V>(self, visitor: V) -> Result<V::Output, Self::Error>
-        where V: MetaVisitor<T>;
+        where V: MetaVisitor<Domain=T>;
 }
 
 pub trait MetaAccess<T> where T: MetaDomain {
-    type Error;
+    type Error: MetaError;
 
     fn next<R>(&mut self, receiver: R) -> Option<Result<R::Output, Self::Error>>
         where R: MetaReceiver<T>;
 
+    #[inline(always)]
     fn next_from<F>(&mut self) -> Option<Result<F, Self::Error>>
         where F: FromMeta<T>
     {
@@ -31,6 +36,7 @@ pub trait MetaAccess<T> where T: MetaDomain {
         {
             type Output = _F;
 
+            #[inline(always)]
             fn receive<S>(self, source: S) -> Result<Self::Output, S::Error> where S: MetaSource<_T> {
                 _F::from_meta(source)
             }
@@ -39,6 +45,7 @@ pub trait MetaAccess<T> where T: MetaDomain {
         self.next(_Recv(PhantomData))
     }
 
+    #[inline(always)]
     fn next_from_collect<F>(&mut self, value: Option<F>) -> Option<Result<F, Self::Error>>
         where F: FromMetaCollect<T>
     {
@@ -50,6 +57,7 @@ pub trait MetaAccess<T> where T: MetaDomain {
         {
             type Output = _F;
 
+            #[inline(always)]
             fn receive<S>(self, source: S) -> Result<Self::Output, S::Error> where S: MetaSource<_T> {
                 _F::from_meta_collect(self.1, source)
             }
@@ -58,17 +66,19 @@ pub trait MetaAccess<T> where T: MetaDomain {
         self.next(_Recv(PhantomData, value))
     }
 
+    #[inline(always)]
     fn next_visit<V>(&mut self, visitor: V) -> Option<Result<V::Output, Self::Error>>
-        where V: MetaVisitor<T>
+        where V: MetaVisitor<Domain=T>
     {
 
         struct _Recv<_T, _V>(PhantomData<_T>, _V);
 
         impl<_T, _V> MetaReceiver<_T> for _Recv<_T, _V>
-            where _T: MetaDomain, _V: MetaVisitor<_T>
+            where _T: MetaDomain, _V: MetaVisitor<Domain=_T>
         {
             type Output = _V::Output;
 
+            #[inline(always)]
             fn receive<S>(self, source: S) -> Result<Self::Output, S::Error> where S: MetaSource<_T> {
                 source.visit(self.1)
             }

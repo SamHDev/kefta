@@ -10,10 +10,10 @@ pub trait FromMetaCollect<T> where T: MetaDomain, Self: Sized {
         where S: MetaSource<T>;
 }
 
-/*
+
 impl<T, F> FromMeta<T> for F where T: MetaDomain, F: FromMetaCollect<T> {
     fn from_meta<S>(source: S) -> Result<Self, S::Error> where S: MetaSource<T> {
         F::from_meta_collect(None, source)
     }
-}*/
+}
 

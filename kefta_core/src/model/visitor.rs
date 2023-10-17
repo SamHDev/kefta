@@ -1,10 +1,14 @@
 use core::fmt;
 use proc_macro2::Span;
+use crate::model::MetaError;
 use crate::model::source::{MetaAccess, MetaDomain, MetaSource};
 
-pub trait MetaVisitor<T> where T: MetaDomain {
+pub trait MetaVisitor: Sized {
     /// the return value for this visitor
     type Output;
+
+    /// the domain for this visitor
+    type Domain: MetaDomain;
 
     /// the type of value this visitor was expecting.
     ///
@@ -36,7 +40,13 @@ pub trait MetaVisitor<T> where T: MetaDomain {
         path: Option<&str>,
         source: S
     ) -> Result<Self::Output, S::Error>
-        where S: MetaSource<T>;
+        where S: MetaSource<Self::Domain> 
+    {
+        Err(S::Error::expecting(span, self, match path {
+            None => format_args!("a leading colon"),
+            Some(x) => format_args!("path ({x})"),
+        }))
+    }
 
     /// visit a marker segment
     ///
@@ -48,7 +58,11 @@ pub trait MetaVisitor<T> where T: MetaDomain {
     fn visit_marker<E>(
         self,
         span: Option<Span>,
-    ) -> Result<Self::Output, E>;
+    ) -> Result<Self::Output, E>
+        where E: MetaError 
+    {
+        Err(E::expecting(span, self, "a marker"))
+    }
 
     /// visit a value segment
     ///
@@ -61,8 +75,15 @@ pub trait MetaVisitor<T> where T: MetaDomain {
     fn visit_value<E>(
         self,
         span: Option<Span>,
-        value: T,
-    ) -> Result<Self::Output, E>;
+        value: Self::Domain,
+    ) -> Result<Self::Output, E>
+        where E: MetaError 
+    {
+        Err(E::expecting(span, self, format_args!(
+            "value ({})",
+            value.as_error_display()
+        )))
+    }
 
     /// visit a list segment
     ///
@@ -77,5 +98,8 @@ pub trait MetaVisitor<T> where T: MetaDomain {
         span: Option<Span>,
         access: A
     ) -> Result<Self::Output, A::Error>
-        where A: MetaAccess<T>;
+        where A: MetaAccess<Self::Domain> 
+    {
+        Err(A::Error::expecting(span, self, format_args!("a list")))
+    }
 }
