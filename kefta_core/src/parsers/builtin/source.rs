@@ -1,5 +1,5 @@
-use crate::domains::builtin::error::BuiltinParserError;
-use crate::domains::builtin::parser::BuiltinParser;
+use crate::parsers::builtin::error::BuiltinParserError;
+use crate::parsers::builtin::parser::BuiltinParser;
 use crate::model::{MetaAccess, MetaDomain, MetaError, MetaReceiver, MetaSource, MetaVisitor};
 use proc_macro2::{Span, TokenStream, TokenTree};
 

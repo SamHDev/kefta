@@ -1,4 +1,6 @@
 #![deny(clippy::all)]
 
-pub mod domains;
+pub mod parsers;
 pub mod model;
+mod types;
+mod error;

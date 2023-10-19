@@ -1,6 +1,7 @@
 use crate::model::visitor::MetaVisitor;
 use proc_macro2::{Span, TokenStream};
 use std::fmt;
+use std::fmt::{Arguments, Debug, Formatter};
 
 pub trait MetaError: Sized {
     fn into_token_stream(self) -> TokenStream;
@@ -43,6 +44,18 @@ pub trait MetaExpected {
 impl<'a> fmt::Display for dyn MetaExpected + 'a {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.expected(f)
+    }
+}
+
+impl<'a> MetaExpected for Arguments<'a> {
+    fn expected(&self, f: &mut Formatter) -> fmt::Result {
+        self.fmt(f)
+    }
+}
+
+impl<'a> MetaExpected for &'a str {
+    fn expected(&self, f: &mut Formatter) -> fmt::Result {
+        f.write_str(self)
     }
 }
 

@@ -1,5 +1,5 @@
-use crate::domains::builtin::error::BuiltinParserError;
-use crate::domains::builtin::source::{BuiltinAccess, BuiltinContSource};
+use crate::parsers::builtin::error::BuiltinParserError;
+use crate::parsers::builtin::source::{BuiltinAccess, BuiltinContSource};
 use crate::model::{MetaError, MetaVisitor};
 use proc_macro2::{Delimiter, Ident, Punct, Spacing, Span, TokenStream, TokenTree};
 use std::marker::PhantomData;

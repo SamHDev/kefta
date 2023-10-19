@@ -1,11 +1,11 @@
 use crate::model::{FromMeta, MetaError, MetaSource, MetaVisitor};
-use proc_macro2::{Group, Ident, Literal, Punct, Span, TokenTree};
+use proc_macro2::{Group, Ident, Literal, Span, TokenTree};
 use std::fmt::Formatter;
 
 impl FromMeta<TokenTree> for TokenTree {
     fn from_meta<S>(source: S) -> Result<Self, S::Error>
-    where
-        S: MetaSource<TokenTree>,
+        where
+            S: MetaSource<TokenTree>,
     {
         struct _Visitor;
 
@@ -22,8 +22,8 @@ impl FromMeta<TokenTree> for TokenTree {
                 _span: Option<Span>,
                 value: Self::Domain,
             ) -> Result<Self::Output, E>
-            where
-                E: MetaError,
+                where
+                    E: MetaError,
             {
                 Ok(value)
             }
@@ -35,14 +35,14 @@ impl FromMeta<TokenTree> for TokenTree {
 
 impl FromMeta<TokenTree> for Ident {
     fn from_meta<S>(source: S) -> Result<Self, S::Error>
-    where
-        S: MetaSource<TokenTree>,
+        where
+            S: MetaSource<TokenTree>,
     {
         struct _Visitor;
 
         struct _Marker<'a>(&'a str);
 
-        impl<'a> MetaVisitor for _Marker {
+        impl<'a> MetaVisitor for _Marker<'a> {
             type Output = Ident;
             type Domain = TokenTree;
 
@@ -51,8 +51,8 @@ impl FromMeta<TokenTree> for Ident {
             }
 
             fn visit_marker<E>(self, span: Option<Span>) -> Result<Self::Output, E>
-            where
-                E: MetaError,
+                where
+                    E: MetaError,
             {
                 Ok(Ident::new(self.0, span.unwrap_or_else(Span::call_site)))
             }
@@ -72,8 +72,8 @@ impl FromMeta<TokenTree> for Ident {
                 path: Option<&str>,
                 source: S,
             ) -> Result<Self::Output, S::Error>
-            where
-                S: MetaSource<Self::Domain>,
+                where
+                    S: MetaSource<Self::Domain>,
             {
                 match path {
                     None => Err(S::Error::expecting(span, self, "a leading tailfish")),
@@ -86,12 +86,12 @@ impl FromMeta<TokenTree> for Ident {
                 span: Option<Span>,
                 value: Self::Domain,
             ) -> Result<Self::Output, E>
-            where
-                E: MetaError,
+                where
+                    E: MetaError,
             {
                 match value {
                     TokenTree::Ident(ident) => Ok(ident),
-                    x @ _ => Err(E::expecting(
+                    x => Err(E::expecting(
                         span,
                         self,
                         format_args!("another token ({x})"),
@@ -106,15 +106,15 @@ impl FromMeta<TokenTree> for Ident {
 
 impl FromMeta<TokenTree> for Literal {
     fn from_meta<S>(source: S) -> Result<Self, S::Error>
-    where
-        S: MetaSource<TokenTree>,
+        where
+            S: MetaSource<TokenTree>,
     {
         match TokenTree::from_meta(source)? {
             TokenTree::Literal(lit) => Ok(lit),
-            token @ _ => Err(S::Error::expecting(
+            token => Err(S::Error::expecting(
                 Some(token.span()),
                 "a literal value",
-                format_args!("another token ({x})"),
+                format_args!("another token ({token})"),
             )),
         }
     }
@@ -122,43 +122,16 @@ impl FromMeta<TokenTree> for Literal {
 
 impl FromMeta<TokenTree> for Group {
     fn from_meta<S>(source: S) -> Result<Self, S::Error>
-    where
-        S: MetaSource<TokenTree>,
+        where
+            S: MetaSource<TokenTree>,
     {
         match TokenTree::from_meta(source)? {
             TokenTree::Group(group) => Ok(group),
-            token @ _ => Err(S::Error::expecting(
+            token => Err(S::Error::expecting(
                 Some(token.span()),
                 "a group token",
-                format_args!("another token ({x})"),
+                format_args!("another token ({token})"),
             )),
         }
-    }
-}
-
-impl FromMeta<TokenTree> for bool {
-    fn from_meta<S>(source: S) -> Result<Self, S::Error>
-    where
-        S: MetaSource<TokenTree>,
-    {
-        struct _Visitor;
-
-        impl MetaVisitor for _Visitor {
-            type Output = bool;
-            type Domain = TokenTree;
-
-            fn expecting(&self, f: &mut Formatter) -> std::fmt::Result {
-                f.write_str("a marker")
-            }
-
-            fn visit_marker<E>(self, _span: Option<Span>) -> Result<Self::Output, E>
-            where
-                E: MetaError,
-            {
-                Ok(true)
-            }
-        }
-
-        source.visit(_Visitor)
     }
 }

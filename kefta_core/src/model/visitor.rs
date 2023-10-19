@@ -33,6 +33,7 @@ pub trait MetaVisitor: Sized {
     /// - the (optional) span of segment
     /// - the identifier of the segment, None denotes a leading colon.
     /// - the source value contained within this segment.
+    #[allow(unused_variables)]
     fn visit_path<S>(
         self,
         span: Option<Span>,
@@ -42,14 +43,10 @@ pub trait MetaVisitor: Sized {
     where
         S: MetaSource<Self::Domain>,
     {
-        Err(S::Error::expecting(
-            span,
-            self,
-            match path {
-                None => format_args!("a leading colon"),
-                Some(x) => format_args!("path ({x})"),
-            },
-        ))
+        Err(match path {
+            Some(path) => S::Error::expecting(span, self, format_args!("path {path}")),
+            None => S::Error::expecting(span, self, format_args!("a leading colon"))
+        })
     }
 
     /// visit a marker segment
@@ -93,6 +90,7 @@ pub trait MetaVisitor: Sized {
     /// - the (optional) span of segment
     /// - the value of the segment (as the domain)
     /// - an error type (generic `E`)
+    #[allow(unused_variables)]
     fn visit_list<A>(self, span: Option<Span>, access: A) -> Result<Self::Output, A::Error>
     where
         A: MetaAccess<Self::Domain>,

@@ -20,6 +20,7 @@ where
         S: MetaSource<T>;
 }
 
+/*
 impl<T, F> FromMeta<T> for F
 where
     T: MetaDomain,
@@ -31,4 +32,4 @@ where
     {
         F::from_meta_collect(None, source)
     }
-}
+}*/
