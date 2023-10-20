@@ -1,7 +1,11 @@
+use std::any::type_name;
 use std::fmt::Formatter;
+use std::marker::PhantomData;
 use proc_macro2::Span;
+use quote::__private::ext::RepToTokensExt;
+use syn;
 use syn::{Expr, ExprPath};
-use crate::model::{FromMeta, MetaError, MetaSource, MetaVisitor};
+use crate::model::{FromMeta, MetaDomain, MetaError, MetaSource, MetaVisitor};
 
 impl FromMeta<Expr> for Expr {
     fn from_meta<S>(source: S) -> Result<Self, S::Error> where S: MetaSource<Expr> {
@@ -193,4 +197,56 @@ impl_syn_pat_num! {
 
     for -- f32: syn::Lit::Float(expr) => expr,
     for -- f64: syn::Lit::Float(expr) => expr
+}
+
+
+macro_rules! impl_syn_tuple {
+    ($(
+        (
+            $len: literal:
+            $($x: ident),*
+        )
+    )*) => {
+        $(
+
+        impl<$($x),*> FromMeta<Expr> for ($($x),*) where $($x: FromMeta<Expr>),* {
+            fn from_meta<S>(source: S) -> Result<Self, S::Error> where S: MetaSource<Expr> {
+                struct _Visitor<$($x),*>(PhantomData<($($x),*)>);
+
+                impl<$($x),*> MetaVisitor for _Visitor<$($x),*>
+                    where $($x: FromMeta<Expr>),*
+                {
+                    type Output = ($($x),*);
+                    type Domain = Expr;
+
+                    fn expecting(&self, f: &mut Formatter) -> std::fmt::Result {
+                        f.write_fmt(format_args!("a tuple {}", type_name::<Self::Output>()))
+                    }
+
+                    fn visit_value<E>(self, span: Option<Span>, value: Self::Domain) -> Result<Self::Output, E> where E: MetaError {
+                        match value {
+                            Expr::Tuple(syn::ExprTuple { elems , ..}) => {
+                                Ok((
+                                   $(match elems.next().map($x::from_meta) {
+                                        Some(Ok(x)) => x,
+                                        Some(Err(e)) => Err(e),
+                                        None => return Err(E::invalid_value(span, self, concat!("expected tuple length ", stringify!($len)))),
+                                    },)*
+                                ))
+                            },
+                            expr => Err(E::expecting(span, self, format_args!("expr ({})", expr.as_error_display())))
+                        }
+                    }
+                }
+
+                source.visit()
+            }
+        }
+
+        )*
+    };
+}
+
+impl_syn_tuple! {
+    (2: T0, T1)
 }
