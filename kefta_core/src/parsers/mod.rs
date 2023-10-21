@@ -3,4 +3,4 @@ pub mod builtin;
 pub mod other;
 
 #[cfg(feature = "syn")]
-pub mod syn;
+pub mod _syn;

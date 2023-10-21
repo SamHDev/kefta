@@ -197,7 +197,7 @@ impl_syn_pat_num! {
 
     for -- f32: syn::Lit::Float(expr) => expr,
     for -- f64: syn::Lit::Float(expr) => expr
-}
+};
 
 
 macro_rules! impl_syn_tuple {

@@ -11,15 +11,15 @@ pub trait MetaDomain {
         Self: 'a;
 
     fn as_error_display<'a>(&'a self) -> Self::ErrorDisplay<'a>;
+
+    type Error: MetaError;
 }
 
 pub trait MetaSource<T>
 where
     T: MetaDomain,
 {
-    type Error: MetaError;
-
-    fn visit<V>(self, visitor: V) -> Result<V::Output, Self::Error>
+    fn visit<V>(self, visitor: V) -> Result<V::Output, T::Error>
     where
         V: MetaVisitor<Domain = T>;
 }
@@ -28,14 +28,13 @@ pub trait MetaAccess<T>
 where
     T: MetaDomain,
 {
-    type Error: MetaError;
 
-    fn next<R>(&mut self, receiver: R) -> Option<Result<R::Output, Self::Error>>
+    fn next<R>(&mut self, receiver: R) -> Option<Result<R::Output, T::Error>>
     where
         R: MetaReceiver<T>;
 
     #[inline(always)]
-    fn next_from<F>(&mut self) -> Option<Result<F, Self::Error>>
+    fn next_from<F>(&mut self) -> Option<Result<F, T::Error>>
     where
         F: FromMeta<T>,
     {
@@ -49,7 +48,7 @@ where
             type Output = _F;
 
             #[inline(always)]
-            fn receive<S>(self, source: S) -> Result<Self::Output, S::Error>
+            fn receive<S>(self, source: S) -> Result<Self::Output, _T::Error>
             where
                 S: MetaSource<_T>,
             {
@@ -61,7 +60,7 @@ where
     }
 
     #[inline(always)]
-    fn next_from_collect<F>(&mut self, value: Option<F>) -> Option<Result<F, Self::Error>>
+    fn next_from_collect<F>(&mut self, value: Option<F>) -> Option<Result<F, T::Error>>
     where
         F: FromMetaCollect<T>,
     {
@@ -75,7 +74,7 @@ where
             type Output = _F;
 
             #[inline(always)]
-            fn receive<S>(self, source: S) -> Result<Self::Output, S::Error>
+            fn receive<S>(self, source: S) -> Result<Self::Output, _T::Error>
             where
                 S: MetaSource<_T>,
             {
@@ -87,7 +86,7 @@ where
     }
 
     #[inline(always)]
-    fn next_visit<V>(&mut self, visitor: V) -> Option<Result<V::Output, Self::Error>>
+    fn next_visit<V>(&mut self, visitor: V) -> Option<Result<V::Output, T::Error>>
     where
         V: MetaVisitor<Domain = T>,
     {
@@ -101,7 +100,7 @@ where
             type Output = _V::Output;
 
             #[inline(always)]
-            fn receive<S>(self, source: S) -> Result<Self::Output, S::Error>
+            fn receive<S>(self, source: S) -> Result<Self::Output, _T::Error>
             where
                 S: MetaSource<_T>,
             {
@@ -119,7 +118,7 @@ where
 {
     type Output;
 
-    fn receive<S>(self, source: S) -> Result<Self::Output, S::Error>
+    fn receive<S>(self, source: S) -> Result<Self::Output, T::Error>
     where
         S: MetaSource<T>;
 }
