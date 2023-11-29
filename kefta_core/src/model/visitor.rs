@@ -1,100 +1,58 @@
-use crate::model::source::{MetaAccess, MetaDomain, MetaSource};
-use crate::model::MetaError;
-use core::fmt;
+use std::fmt;
+use std::fmt::Formatter;
+use std::task::ready;
 use proc_macro2::Span;
+use crate::model::error::{MetaError, MetaExpected};
+use crate::model::parser::{MetaFlavour, MetaParser};
 
 pub trait MetaVisitor: Sized {
-    /// the return value for this visitor
+    type Flavour: MetaFlavour;
     type Output;
 
-    /// the domain for this visitor
-    type Domain: MetaDomain;
+    fn expecting(&self, f: &mut Formatter) -> fmt::Result;
 
-    /// the type of value this visitor was expecting.
-    ///
-    /// - in the format `"expecting: <FMT>"`
-    /// - automagically used in non-implemented `visit_*` methods.
-    ///
-    /// ```
-    /// use std::fmt;
-    ///
-    /// # struct _Shim;
-    /// # impl _Shim {
-    /// fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
-    ///     f.write_str("a valid value") // expected: a valid value
-    /// }
-    /// # }
-    /// ```
-    fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result;
-
-    /// visit a path segment
-    ///
-    /// contains:
-    /// - the (optional) span of segment
-    /// - the identifier of the segment, None denotes a leading colon.
-    /// - the source value contained within this segment.
     #[allow(unused_variables)]
-    fn visit_path<S>(
+    fn visit_marker<E>(
         self,
-        span: Option<Span>,
-        path: Option<&str>,
-        source: S,
-    ) -> Result<Self::Output, S::Error>
-    where
-        S: MetaSource<Self::Domain>,
-    {
-        Err(match path {
-            Some(path) => S::Error::expecting(span, self, format_args!("path {path}")),
-            None => S::Error::expecting(span, self, format_args!("a leading colon"))
-        })
-    }
-
-    /// visit a marker segment
-    ///
-    /// denotes the end of an path with no value.
-    ///
-    /// contains:
-    /// - the (optional) span of segment
-    /// - an error type (generic `E`)
-    fn visit_marker<E>(self, span: Option<Span>) -> Result<Self::Output, E>
-    where
-        E: MetaError,
-    {
-        Err(E::expecting(span, self, "a marker"))
-    }
-
-    /// visit a value segment
-    ///
-    /// denotes the end of an path with a value.
-    ///
-    /// contains:
-    /// - the (optional) span of segment
-    /// - the value of the segment (as the domain)
-    /// - an error type (generic `E`)
-    fn visit_value<E>(self, span: Option<Span>, value: Self::Domain) -> Result<Self::Output, E>
-    where
-        E: MetaError,
+        span: Option<Span>
+    ) -> Result<Self::Output, E>
+        where E: MetaError
     {
         Err(E::expecting(
             span,
-            self,
-            format_args!("value ({})", value.as_error_display()),
+            &self as &dyn MetaExpected,
+            "marker value"
         ))
     }
 
-    /// visit a list segment
-    ///
-    /// denotes the end of an path with a list.
-    ///
-    /// contains:
-    /// - the (optional) span of segment
-    /// - the value of the segment (as the domain)
-    /// - an error type (generic `E`)
     #[allow(unused_variables)]
-    fn visit_list<A>(self, span: Option<Span>, access: A) -> Result<Self::Output, A::Error>
-    where
-        A: MetaAccess<Self::Domain>,
+    fn visit_path<P>(
+        self,
+        span: Option<Span>,
+        path: Option<&str>,
+        child: P
+    ) -> Result<Self::Output, P::Error>
+        where P: MetaParser<Self::Flavour>
     {
-        Err(A::Error::expecting(span, self, format_args!("a list")))
+        Err(P::Error::expecting(
+            span,
+            &self as &dyn MetaExpected,
+            "marker value"
+        ))
     }
+
+    fn visit_value<E>(
+        self,
+        span: Option<Span>,
+        value: Self::Flavour,
+    ) -> Result<Self::Output, E>
+        where E: MetaError
+    {
+        Err(E::expecting(
+            span,
+            &self as &dyn MetaExpected,
+            &value as &dyn MetaFlavour
+        ))
+    }
+
 }
