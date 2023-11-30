@@ -1,0 +1,11 @@
+[package]
+name = "kefta_builtin"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+documentation.workspace = true
+repository.workspace = true
+
+[dependencies]
+kefta_core = { workspace = true, features=["default_error"] }
+proc-macro2.workspace =  true

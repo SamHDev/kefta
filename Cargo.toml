@@ -1,4 +1,19 @@
 [workspace]
+resolver = "2"
 members = [
-    "kefta_core"
+    "kefta_core",
+    "kefta_builtin"
 ]
+
+[workspace.package]
+version = "0.1.0-rc0"
+edition = "2021"
+
+authors = ["Sam Huddart <sam.fucked.up@samh.dev>"]
+documentation = "https://docs.rs/kefta"
+repository = "https://github.com/samhdev/kefta"
+
+[workspace.dependencies]
+kefta_core = { path = "./kefta_core", version = "0.1.0-rc0"  }
+
+proc-macro2 = "1.0.67"
